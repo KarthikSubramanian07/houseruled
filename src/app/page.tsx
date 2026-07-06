@@ -16,7 +16,9 @@ export default function Home() {
       </header>
 
       <main className="flex flex-1 flex-col items-center justify-center px-6 pb-20 pt-6 text-center">
-        <div className="flex max-w-2xl flex-col items-center gap-6">
+        {/* w-full constrains the column to the padded viewport so the copy wraps
+            instead of growing to its max-width and clipping on narrow screens. */}
+        <div className="flex w-full max-w-2xl flex-col items-center gap-6">
           <p className="text-xs font-medium uppercase tracking-[0.3em] text-brass">
             free forever · no app · no account
           </p>
