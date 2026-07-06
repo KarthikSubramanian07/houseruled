@@ -24,16 +24,32 @@ Houseruled is built in deliberate phases — each one playable before the next b
 
 | Phase | What | Status |
 | :---- | :--- | :----: |
-| **0** | Scaffolding — rooms, join-by-link, the felt table | ✅ **Here now** |
-| 1 | The engine + 5 built-in games (War → Blackjack) | ⬜ Next |
-| 2 | Toggle-based house rules (curated, pre-built) | ⬜ |
-| 3 | Free-text AI house rules (*"queens reverse direction"*) | ⬜ |
+| 0 | Scaffolding — rooms, join-by-link, the felt table | ✅ |
+| **1** | The engine + 5 built-in games (War → Blackjack) | ✅ **Here now** |
+| **2** | Toggle-based house rules (curated, pre-built) | ✅ **Here now** |
+| 3 | Free-text AI house rules (*"queens reverse direction"*) | ⬜ Next |
 | 4 | Whole games invented from a sentence | ⬜ |
 | 5 | Community library, accounts, spectators, the rest of the deck | ⬜ |
 
-**Today you can:** spin up a table, get a shareable code + link, and watch friends
-pull up a chair in real time over a live WebSocket. No games are dealt yet —
-that's Phase 1 — but the table is set and the felt feels right.
+**Today you can:** spin up a table, share the code, and actually **play** — War,
+Go Fish, Old Maid, Crazy Eights, and Blackjack, live over WebSockets. The host
+picks the game and toggles **house rules** (twos draw two, queens reverse, dealer
+hits soft 17, …) with live conflict detection before the deal.
+
+### The games (Phase 1)
+
+Every game runs **server-authoritatively inside the room's Durable Object** — it
+owns the deck, validates every move, and sends each player only their own hand.
+War → Go Fish → Old Maid → Crazy Eights → Blackjack, in rising complexity. The
+engine is pure, shared TypeScript with 30+ tests (randomized playthroughs that
+conserve every card and always terminate).
+
+### House rules (Phase 2)
+
+Before a game, the host toggles curated, pre-validated rules (10 for Crazy Eights
+alone). Mutually-exclusive rules and unmet dependencies are caught and surfaced —
+never silently resolved — so the table agrees before the first card is dealt.
+This is the low-risk groundwork for the free-text AI rules coming in Phase 3.
 
 ## The free-forever table — all Cloudflare
 

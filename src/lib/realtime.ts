@@ -1,9 +1,11 @@
-// Realtime client. Connects a WebSocket to the room's Durable Object
-// (/api/room/<code>/ws) for live presence + game-state relay. Under `next dev`
-// (no Worker) it degrades to a local single-seat demo so the lobby still renders.
+// Realtime client. Connects a WebSocket to the room's Durable Object for live
+// presence AND authoritative gameplay: it sends host/action messages and receives
+// this player's own game view. Under `next dev` (no Worker) it degrades to a local
+// single-seat demo so the lobby still renders.
 
 import { HAS_REMOTE_BACKEND } from "./env";
 import type { Player, PresenceState, SeatedPlayer } from "./types";
+import type { Action, GameView } from "./engine/types";
 
 export type ChannelStatus = "connecting" | "connected" | "demo" | "error";
 
@@ -11,21 +13,22 @@ export interface JoinOptions {
   code: string;
   player: Player;
   onPlayers: (players: SeatedPlayer[]) => void;
-  onBroadcast?: (event: string, payload: unknown) => void;
+  onGame: (view: GameView | null) => void;
   onStatus?: (status: ChannelStatus) => void;
+  onError?: (message: string) => void;
 }
 
 export interface RoomChannel {
-  /** Send a game-state delta / message to everyone else in the room. */
-  broadcast(event: string, payload: unknown): void;
-  /** Leave the room and close the socket. */
+  startGame(game: string, rules: string[]): void;
+  sendAction(action: Action): void;
+  rematch(): void;
+  backToLobby(): void;
   destroy(): Promise<void>;
 }
 
 /**
  * Collapse a flat presence list into a stable, sorted seat list: dedupe by id
- * (keeping the earliest join — e.g. a player with two tabs), mark the viewer's
- * own seat, host first then by join order. Exported for unit testing.
+ * (earliest join wins), mark the viewer's own seat, host first then join order.
  */
 export function toSeats(players: PresenceState[], selfId: string): SeatedPlayer[] {
   const byId = new Map<string, SeatedPlayer>();
@@ -48,66 +51,73 @@ export function toSeats(players: PresenceState[], selfId: string): SeatedPlayer[
 }
 
 export function joinRoomChannel(opts: JoinOptions): RoomChannel {
-  const { code, player, onPlayers, onBroadcast, onStatus } = opts;
+  const { code, player, onPlayers, onGame, onStatus, onError } = opts;
 
-  // ── Demo mode: no Worker, seat the local player so the felt renders. ────────
+  // ── Demo mode: no Worker, so seat the local player; games need the backend. ──
   if (!HAS_REMOTE_BACKEND) {
     onStatus?.("demo");
     onPlayers([{ ...player, isHost: true, isSelf: true, joinedAt: Date.now() }]);
-    return { broadcast: () => {}, destroy: async () => {} };
+    onGame(null);
+    return {
+      startGame: () => onError?.("Games run on the live backend — deploy or run `wrangler dev`."),
+      sendAction: () => {},
+      rematch: () => {},
+      backToLobby: () => {},
+      destroy: async () => {},
+    };
   }
 
   onStatus?.("connecting");
   let destroyed = false;
-
   const proto = window.location.protocol === "https:" ? "wss" : "ws";
   const ws = new WebSocket(`${proto}://${window.location.host}/api/room/${code}/ws`);
 
-  ws.onopen = () => {
-    if (destroyed) {
-      ws.close();
-      return;
+  const send = (obj: unknown) => {
+    try {
+      ws.send(JSON.stringify(obj));
+    } catch {
+      /* not open */
     }
-    ws.send(JSON.stringify({ t: "join", id: player.id, name: player.name }));
+  };
+
+  ws.onopen = () => {
+    if (destroyed) return ws.close();
+    send({ t: "join", id: player.id, name: player.name });
     onStatus?.("connected");
   };
 
   ws.onmessage = (ev) => {
     if (destroyed || typeof ev.data !== "string") return;
-    let msg: { t?: string; players?: PresenceState[]; event?: string; data?: unknown };
+    let msg: {
+      t?: string;
+      players?: PresenceState[];
+      view?: GameView | null;
+      message?: string;
+    };
     try {
       msg = JSON.parse(ev.data);
     } catch {
       return;
     }
-    if (msg.t === "presence" && Array.isArray(msg.players)) {
-      onPlayers(toSeats(msg.players, player.id));
-    } else if (msg.t === "msg" && msg.event) {
-      onBroadcast?.(msg.event, msg.data);
-    }
+    if (msg.t === "presence" && Array.isArray(msg.players)) onPlayers(toSeats(msg.players, player.id));
+    else if (msg.t === "game") onGame(msg.view ?? null);
+    else if (msg.t === "error" && msg.message) onError?.(msg.message);
   };
 
-  ws.onerror = () => {
-    if (!destroyed) onStatus?.("error");
-  };
-  ws.onclose = () => {
-    if (!destroyed) onStatus?.("error");
-  };
+  ws.onerror = () => { if (!destroyed) onStatus?.("error"); };
+  ws.onclose = () => { if (!destroyed) onStatus?.("error"); };
 
   return {
-    broadcast(event: string, data: unknown) {
-      try {
-        ws.send(JSON.stringify({ t: "msg", event, data }));
-      } catch {
-        // Socket not open — drop (Phase 1 will add buffering/reconnect).
-      }
-    },
+    startGame: (game, rules) => send({ t: "start", game, rules }),
+    sendAction: (action) => send({ t: "action", action }),
+    rematch: () => send({ t: "rematch" }),
+    backToLobby: () => send({ t: "backToLobby" }),
     async destroy() {
       destroyed = true;
       try {
         ws.close();
       } catch {
-        // Already closed.
+        /* already closed */
       }
     },
   };
