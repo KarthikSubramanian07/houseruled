@@ -77,6 +77,9 @@ function cardEffects(rank: Rank, rules: string[]): Effects {
     if (rules.includes("ce8-jacks-skip")) e.skip = 1;
   } else if (rank === 1) {
     if (rules.includes("ce8-aces-reverse")) e.reverse = true;
+    else if (rules.includes("ce8-aces-skip")) e.skip = 1;
+  } else if (rank === 13) {
+    if (rules.includes("ce8-kings-skip")) e.skip = 1;
   }
   return e;
 }
