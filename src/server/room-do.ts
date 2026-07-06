@@ -43,6 +43,7 @@ type ClientMessage =
   | { t: "start"; game: string; rules?: string[]; ruleTexts?: string[] }
   | { t: "action"; action: Action }
   | { t: "proposeRule"; text: string }
+  | { t: "chat"; text: string }
   | { t: "rematch" }
   | { t: "backToLobby" };
 
@@ -138,6 +139,8 @@ export class RoomDO implements DurableObject {
         return this.onAction(ws, msg);
       case "proposeRule":
         return this.onProposeRule(ws, msg);
+      case "chat":
+        return this.onChat(ws, msg);
       case "rematch":
         return this.onRematch(ws);
       case "backToLobby":
@@ -241,6 +244,14 @@ export class RoomDO implements DurableObject {
     // Announce it so the table sees the change (not just silently applied).
     this.broadcastJson({ t: "notice", message: `New house rule: “${parsed.rule.raw}”` });
     this.broadcastGame();
+  }
+
+  private onChat(ws: WebSocket, msg: { text: string }): void {
+    const actor = this.attachmentOf(ws);
+    if (!actor) return;
+    const text = String(msg.text ?? "").trim().slice(0, 300);
+    if (!text) return;
+    this.broadcastJson({ t: "chat", from: actor.name, id: actor.id, text, at: Date.now() });
   }
 
   private async onRematch(ws: WebSocket): Promise<void> {
