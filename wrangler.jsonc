@@ -1,0 +1,32 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "houseruled",
+  // Custom entry: routes /api/room/* (incl. WebSockets) to the RoomDO Durable
+  // Object, delegates everything else to the OpenNext-generated handler.
+  "main": "worker.ts",
+  "compatibility_date": "2025-03-25",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "services": [
+    {
+      // Self-reference lets OpenNext invoke the worker for revalidation etc.
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "houseruled"
+    }
+  ],
+  // One Durable Object per room: live presence + game-state relay over WebSockets.
+  "durable_objects": {
+    "bindings": [{ "name": "ROOM_DO", "class_name": "RoomDO" }]
+  },
+  // SQLite-backed Durable Objects are available on the free Workers plan.
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["RoomDO"] }],
+  // D1 (community library + accounts) lands in Phase 4/5 — the schema is ready in
+  // migrations/, and the binding is added here once the DB is created:
+  //   "d1_databases": [{ "binding": "DB", "database_name": "houseruled", "database_id": "<id>" }]
+  "observability": {
+    "enabled": true
+  }
+}
