@@ -1,0 +1,24 @@
+{
+  // Type-checks the Cloudflare Worker code (the RoomDO Durable Object), which
+  // uses the Workers runtime types — not the DOM. Kept separate from the Next
+  // app's tsconfig so the two `WebSocket`/`Request` type worlds don't collide.
+  // (worker.ts itself is thin glue that imports the generated OpenNext handler;
+  // it's transpiled by wrangler, not type-checked here.)
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "types": ["@cloudflare/workers-types"],
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "resolveJsonModule": true,
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": ["src/server/**/*.ts"]
+}
