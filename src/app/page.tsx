@@ -19,10 +19,6 @@ export default function Home() {
         {/* w-full constrains the column to the padded viewport so the copy wraps
             instead of growing to its max-width and clipping on narrow screens. */}
         <div className="flex w-full max-w-2xl flex-col items-center gap-6">
-          <p className="text-xs font-medium uppercase tracking-[0.3em] text-brass">
-            free forever · no app · no account
-          </p>
-
           <h1
             className="font-display font-semibold leading-[0.95] tracking-tight text-cream"
             style={{ fontSize: "var(--text-hero)" }}

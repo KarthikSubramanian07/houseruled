@@ -4,6 +4,7 @@ import { useState } from "react";
 import { PlayingCard } from "./PlayingCard";
 import { Button } from "../Button";
 import { SUITS, SUIT_SYMBOL, RANK_LABEL, isRed, type Card, type Suit, type Rank } from "@/lib/engine/cards";
+import { getRule } from "@/lib/engine/houserules";
 import type { Action, GameView, PlayerPublic } from "@/lib/engine/types";
 
 const key = (c: Card) => `${c.r}${c.s}`;
@@ -36,6 +37,18 @@ export function GameTable({
           <OpponentBadge key={p.id} p={p} type={view.type} />
         ))}
       </div>
+
+      {/* Active house rules — always visible, the signature idea. */}
+      {view.rules.length > 0 && (
+        <div className="flex flex-wrap items-center justify-center gap-1.5">
+          <span className="plaque-header text-[10px] text-brass/60">House rules</span>
+          {view.rules.map((id) => (
+            <span key={id} className="rounded-full border border-brass/30 bg-brass/5 px-2.5 py-0.5 text-xs text-brass">
+              {getRule(id)?.label ?? id}
+            </span>
+          ))}
+        </div>
+      )}
 
       {/* Center — game-specific */}
       <div className="min-h-40 rounded-2xl border border-brass/15 bg-felt-dark/30 px-4 py-6">
@@ -76,7 +89,7 @@ function OpponentBadge({ p, type }: { p: PlayerPublic; type: string }) {
   const result = p.extra?.result as string | undefined;
   return (
     <div className={`flex w-28 flex-col items-center gap-1.5 rounded-xl px-2 py-2 ${p.isTurn ? "bg-brass/10 ring-1 ring-brass/50" : ""}`}>
-      <div className={`grid h-11 w-11 place-items-center rounded-full bg-felt-dark text-sm font-semibold text-cream ring-2 ${p.isTurn ? "ring-brass-bright" : "ring-brass/50"} ${p.out ? "opacity-40" : ""}`}>
+      <div className={`grid h-11 w-11 place-items-center rounded-full bg-felt-dark text-sm font-semibold text-cream ring-2 ${p.isTurn ? "ring-brass-bright turn-pulse" : "ring-brass/50"} ${p.out ? "opacity-40" : ""}`}>
         {initials(p.name)}
       </div>
       <span className="max-w-28 truncate text-xs font-medium text-cream">{p.name}</span>
@@ -209,13 +222,16 @@ function Hand({ view, onAction }: { view: GameView; onAction: (a: Action) => voi
       <div className="flex flex-wrap items-end justify-center gap-1.5">
         {view.hand.map((card, i) => {
           const canPlay = playable.has(key(card));
+          const myTurn = view.turn === view.you;
           return (
             <PlayingCard
               key={`${key(card)}-${i}`}
               card={card}
               size="md"
+              delay={Math.min(i, 8) * 45}
               onClick={view.type === "crazyeights" && canPlay ? () => clickCard(card) : undefined}
-              dimmed={view.type === "crazyeights" && view.turn === view.you && !canPlay}
+              highlight={view.type === "crazyeights" && myTurn && canPlay}
+              dimmed={view.type === "crazyeights" && myTurn && !canPlay}
             />
           );
         })}

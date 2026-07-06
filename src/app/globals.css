@@ -222,6 +222,33 @@ body::before {
   animation: deal-in 260ms var(--ease-card) both;
 }
 
+/* A quiet brass pulse on the active player's seat — signals turn without shouting. */
+@keyframes turn-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--color-brass) 55%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 5px color-mix(in oklab, var(--color-brass) 0%, transparent);
+  }
+}
+.turn-pulse {
+  animation: turn-pulse 2.2s var(--ease-card) infinite;
+}
+
+/* Playable cards breathe up a hair; the felt stays calm around them. */
+@keyframes card-rise {
+  from {
+    translate: 0 3px;
+  }
+  to {
+    translate: 0 -2px;
+  }
+}
+.card-playable {
+  animation: card-rise 1.8s var(--ease-card) infinite alternate;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
