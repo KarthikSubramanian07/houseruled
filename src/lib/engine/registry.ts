@@ -2,6 +2,7 @@
 // through here — it never needs to know a specific game's internals.
 
 import type { Action, GameDefinition, GameView, SeatInfo } from "./types";
+import type { AIRule } from "./airules";
 import { war } from "./games/war";
 import { gofish } from "./games/gofish";
 import { oldmaid } from "./games/oldmaid";
@@ -60,4 +61,23 @@ export function viewGame(type: string, state: unknown, viewer: string): GameView
   const g = GAMES[type];
   if (!g) throw new Error(`Unknown game: ${type}`);
   return g.view(state, viewer);
+}
+
+/** Whether a game supports free-text (Phase 3) rules. */
+export function supportsAIRules(type: string): boolean {
+  return type === "crazyeights";
+}
+
+/** Read the free-text rules currently attached to a game state. */
+export function getAIRules(type: string, state: unknown): AIRule[] {
+  if (!supportsAIRules(type)) return [];
+  return ((state as { aiRules?: AIRule[] }).aiRules ?? []).slice();
+}
+
+/** Attach validated free-text rules to a game state (pre-game or live). */
+export function addAIRules(type: string, state: unknown, rules: AIRule[]): unknown {
+  if (!supportsAIRules(type) || rules.length === 0) return state;
+  const s = state as { aiRules?: AIRule[]; plays?: number };
+  const stamped = rules.map((r) => ({ ...r, addedAtPlay: s.plays ?? 0 }));
+  return { ...s, aiRules: [...(s.aiRules ?? []), ...stamped] };
 }

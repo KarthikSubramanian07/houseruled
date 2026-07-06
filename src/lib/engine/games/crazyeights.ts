@@ -5,12 +5,15 @@
 import { standardDeck, shuffle, type Card, type Suit, type Rank } from "../cards";
 import { makeRng } from "../rng";
 import { nextActiveIndex, type ApplyResult, type GameDefinition, type GameStatus, type GameView, type SeatInfo } from "../types";
+import { type AIRule, activeRules, aiCardEffects, isWildByRule, summarizeRule } from "../airules";
 
 interface CE8State {
   type: "crazyeights";
   seed: number;
   shuffles: number;
   rules: string[];
+  aiRules: AIRule[]; // Phase 3 free-text rules (structured + validated)
+  plays: number; // total cards played, for round-limited rule expiry
   players: SeatInfo[];
   hands: Card[][];
   draw: Card[];
@@ -24,6 +27,14 @@ interface CE8State {
   over: boolean;
   winner: number | null;
   log: string[];
+}
+
+/** Rules currently in force (round-limited ones expire by play count). */
+function liveRules(state: CE8State): AIRule[] {
+  return activeRules(state.aiRules, state.plays, state.players.length);
+}
+function isWild(card: Card, rules: AIRule[]): boolean {
+  return card.r === 8 || isWildByRule(card, rules);
 }
 
 /** When the whole table is stuck (draw exhausted, nobody can play), fewest cards wins. */
@@ -136,6 +147,8 @@ export const crazyeights: GameDefinition<CE8State> = {
       seed,
       shuffles: 0,
       rules,
+      aiRules: [],
+      plays: 0,
       players,
       hands,
       draw,
@@ -158,6 +171,7 @@ export const crazyeights: GameDefinition<CE8State> = {
     if (seat !== state.turn) return [];
     const hand = state.hands[seat];
     const top = state.discard[state.discard.length - 1];
+    const live = liveRules(state);
 
     // Facing a draw penalty.
     if (state.mustDraw > 0) {
@@ -172,17 +186,17 @@ export const crazyeights: GameDefinition<CE8State> = {
     if (state.justDrew) {
       const playable = isPlayable(state.justDrew, state.currentSuit, top.r);
       if (state.rules.includes("ce8-draw-until-play")) {
-        if (playable) return [{ type: "play", card: state.justDrew, wild: state.justDrew.r === 8 }];
+        if (playable) return [{ type: "play", card: state.justDrew, wild: isWild(state.justDrew, live) }];
         return canEverDraw(state) ? [{ type: "draw" }] : [{ type: "pass" }];
       }
       const out: { type: string; card?: Card; wild?: boolean }[] = [{ type: "pass" }];
-      if (playable) out.unshift({ type: "play", card: state.justDrew, wild: state.justDrew.r === 8 });
+      if (playable) out.unshift({ type: "play", card: state.justDrew, wild: isWild(state.justDrew, live) });
       return out;
     }
 
     // Normal turn.
     const playable = hand.filter((c) => isPlayable(c, state.currentSuit, top.r));
-    if (playable.length > 0) return playable.map((c) => ({ type: "play", card: c, wild: c.r === 8 }));
+    if (playable.length > 0) return playable.map((c) => ({ type: "play", card: c, wild: isWild(c, live) }));
     return canEverDraw(state) ? [{ type: "draw" }] : [{ type: "pass" }];
   },
 
@@ -223,12 +237,14 @@ export const crazyeights: GameDefinition<CE8State> = {
         return { state, ok: false, error: "That card doesn't match." };
       }
 
-      // Wild 8 needs a declared suit.
+      // Wild cards (8s, or made wild by a free-text rule) need a declared suit.
+      const live = liveRules(state);
+      const wild = isWild(card, live);
       let declared: Suit = card.s;
-      if (card.r === 8) {
+      if (wild) {
         const suit = action.suit as Suit | undefined;
         if (!suit || !["S", "H", "D", "C"].includes(suit))
-          return { state, ok: false, error: "Choose a suit for your 8." };
+          return { state, ok: false, error: "Choose a suit for your wild card." };
         declared = suit;
       }
 
@@ -236,23 +252,30 @@ export const crazyeights: GameDefinition<CE8State> = {
       discard.push(card);
       currentSuit = declared;
       justDrew = null;
+      const plays = state.plays + 1;
 
+      // Combine Phase 2 toggle effects with Phase 3 free-text rule effects.
       const eff = cardEffects(card.r, state.rules);
-      if (eff.reverse) dir = (dir === 1 ? -1 : 1) as 1 | -1;
-      if (eff.draw > 0) mustDraw = (stack ? mustDraw : 0) + eff.draw;
+      const ai = aiCardEffects(card, live);
+      const reverse = eff.reverse !== ai.reverse; // XOR
+      const drawEff = eff.draw + ai.draw;
+      const skip = eff.skip + ai.skip;
+      if (reverse) dir = (dir === 1 ? -1 : 1) as 1 | -1;
+      if (drawEff > 0) mustDraw = (stack ? mustDraw : 0) + drawEff;
 
-      log = push(log, `${state.players[seat].name} played ${card.r}${card.s}${card.r === 8 ? ` → ${declared}` : ""}.`);
+      log = push(log, `${state.players[seat].name} played ${card.r}${card.s}${wild ? ` → ${declared}` : ""}.`);
 
       if (hands[seat].length === 0) {
         log = push(log, `${state.players[seat].name} is out — game over!`);
         return {
           ok: true,
-          state: { ...state, hands, draw, discard, currentSuit, dir, mustDraw: 0, justDrew: null, over: true, winner: seat, log },
+          state: { ...state, hands, draw, discard, currentSuit, dir, plays, mustDraw: 0, justDrew: null, over: true, winner: seat, log },
         };
       }
 
-      const nextTurn = advance(eff.skip);
-      return { ok: true, state: { ...state, hands, draw, discard, currentSuit, dir, mustDraw, justDrew: null, passStreak: 0, turn: nextTurn, log } };
+      // "Play again" keeps the turn (unless it created a draw penalty to pass on).
+      const nextTurn = ai.playAgain && mustDraw === 0 ? seat : advance(skip);
+      return { ok: true, state: { ...state, hands, draw, discard, currentSuit, dir, plays, mustDraw, justDrew: null, passStreak: 0, turn: nextTurn, log } };
     }
 
     if (action.type === "draw") {
@@ -312,6 +335,7 @@ export const crazyeights: GameDefinition<CE8State> = {
       status: this.status(state),
       log: state.log,
       rules: state.rules,
+      aiRules: liveRules(state).map((r) => ({ id: r.id, raw: r.raw, summary: summarizeRule(r) })),
     };
   },
 
