@@ -1,9 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "../Button";
-import { GAME_CATALOG } from "@/lib/engine/registry";
+import { GAME_CATALOG, supportsAIRules } from "@/lib/engine/registry";
 import { rulesFor, detectConflicts } from "@/lib/engine/houserules";
+import { summarizeRule, type AIRule } from "@/lib/engine/airules";
+import { takePreload } from "@/lib/play";
 
 /** Host-only pre-game picker: choose a game, toggle curated house rules (with live
  *  conflict detection), then deal. Non-hosts see a quiet waiting state. */
@@ -14,10 +16,48 @@ export function GameSetup({
 }: {
   playerCount: number;
   isHost: boolean;
-  onStart: (game: string, rules: string[]) => void;
+  onStart: (game: string, rules: string[], ruleTexts: string[]) => void;
 }) {
   const [game, setGame] = useState<string | null>(null);
   const [rules, setRules] = useState<Set<string>>(new Set());
+  const [customRules, setCustomRules] = useState<{ text: string; summary: string }[]>([]);
+  const [ruleInput, setRuleInput] = useState("");
+  const [parsing, setParsing] = useState(false);
+  const [parseError, setParseError] = useState<string | null>(null);
+
+  // A game invented/shared elsewhere preloads the picker (host just hits Deal).
+  useEffect(() => {
+    if (!isHost) return;
+    const pre = takePreload();
+    if (!pre || !GAME_CATALOG.some((g) => g.type === pre.baseGame)) return;
+    setGame(pre.baseGame);
+    setCustomRules(pre.ruleTexts.map((text) => ({ text, summary: "custom rule" })));
+  }, [isHost]);
+
+  async function addCustomRule() {
+    const text = ruleInput.trim();
+    if (!text || !game) return;
+    setParsing(true);
+    setParseError(null);
+    try {
+      const res = await fetch("/api/parse-rule", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ text, game }),
+      });
+      const data = (await res.json()) as { ok: boolean; rule?: AIRule; error?: string };
+      if (data.ok && data.rule) {
+        setCustomRules((prev) => [...prev, { text, summary: summarizeRule(data.rule!) }]);
+        setRuleInput("");
+      } else {
+        setParseError(data.error ?? "Couldn't read that rule.");
+      }
+    } catch {
+      setParseError("Couldn't reach the rules engine.");
+    } finally {
+      setParsing(false);
+    }
+  }
 
   const conflicts = useMemo(
     () => (game ? detectConflicts(game, [...rules]) : []),
@@ -50,6 +90,9 @@ export function GameSetup({
   function chooseGame(type: string) {
     setGame(type);
     setRules(new Set()); // rules are per-game
+    setCustomRules([]);
+    setRuleInput("");
+    setParseError(null);
   }
 
   const gameRules = game ? rulesFor(game) : [];
@@ -133,8 +176,49 @@ export function GameSetup({
         </div>
       )}
 
+      {/* Free-text (AI) house rules — Phase 3 */}
+      {game && supportsAIRules(game) && (
+        <div className="felt-panel rounded-xl p-4">
+          <h3 className="plaque-header mb-1 text-xs text-brass">Write your own rule — in plain English</h3>
+          <p className="mb-3 text-xs text-cream/45">
+            e.g. “twos are wild”, “queens reverse”, “playing a 7 lets you go again”. The AI turns it into a real rule.
+          </p>
+          <div className="flex gap-2">
+            <input
+              value={ruleInput}
+              onChange={(e) => setRuleInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && addCustomRule()}
+              placeholder="Type a house rule…"
+              maxLength={200}
+              className="felt-panel min-w-0 flex-1 rounded-full px-4 py-2 text-sm text-cream placeholder:text-cream/30"
+            />
+            <Button variant="quiet" size="md" disabled={parsing || !ruleInput.trim()} onClick={addCustomRule}>
+              {parsing ? "Reading…" : "Add"}
+            </Button>
+          </div>
+          {parseError && <p className="mt-2 text-xs text-ember">{parseError}</p>}
+          {customRules.length > 0 && (
+            <ul className="mt-3 space-y-1.5">
+              {customRules.map((r, i) => (
+                <li key={i} className="flex items-center justify-between gap-2 rounded-lg bg-brass/5 px-3 py-1.5">
+                  <span className="text-sm text-cream">
+                    “{r.text}” <span className="text-brass/70">· {r.summary}</span>
+                  </span>
+                  <button
+                    onClick={() => setCustomRules((prev) => prev.filter((_, j) => j !== i))}
+                    className="text-xs text-cream/40 hover:text-ember"
+                  >
+                    remove
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+
       <div className="flex flex-col items-center gap-2">
-        <Button size="lg" disabled={!canStart} onClick={() => game && onStart(game, [...rules])}>
+        <Button size="lg" disabled={!canStart} onClick={() => game && onStart(game, [...rules], customRules.map((r) => r.text))}>
           {game ? `Deal ${meta?.name}` : "Pick a game"}
         </Button>
         {game && !fits && (

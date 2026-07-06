@@ -53,8 +53,10 @@ export interface GameView {
   status: GameStatus;
   /** Recent event-log lines, newest last. */
   log: string[];
-  /** Active house-rule ids, for display on the plaque. */
+  /** Active Phase-2 house-rule ids, for display on the plaque. */
   rules: string[];
+  /** Active Phase-3 free-text rules (id, original text, effect summary). */
+  aiRules?: { id: string; raw: string; summary: string }[];
 }
 
 export interface ApplyResult<S> {

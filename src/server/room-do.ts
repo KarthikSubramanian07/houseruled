@@ -11,9 +11,10 @@
 
 import type { PresenceState, RoomStatus } from "../lib/types";
 import type { Action } from "../lib/engine/types";
-import { GAMES, initGame, applyGame, viewGame } from "../lib/engine/registry";
+import { GAMES, initGame, applyGame, viewGame, supportsAIRules, addAIRules } from "../lib/engine/registry";
 import { sanitizeRules, detectConflicts } from "../lib/engine/houserules";
 import { randomSeed } from "../lib/engine/rng";
+import { parseWithCache, type AIEnv } from "../lib/ai/groq";
 
 export interface RoomMeta {
   code: string;
@@ -39,8 +40,10 @@ interface GameSlot {
 
 type ClientMessage =
   | { t: "join"; id: string; name: string }
-  | { t: "start"; game: string; rules?: string[] }
+  | { t: "start"; game: string; rules?: string[]; ruleTexts?: string[] }
   | { t: "action"; action: Action }
+  | { t: "proposeRule"; text: string }
+  | { t: "chat"; text: string }
   | { t: "rematch" }
   | { t: "backToLobby" };
 
@@ -53,10 +56,12 @@ function json(body: unknown, status = 200): Response {
 
 export class RoomDO implements DurableObject {
   private readonly state: DurableObjectState;
+  private readonly env: AIEnv;
   private game: GameSlot | null | undefined = undefined; // undefined = not yet loaded
 
-  constructor(state: DurableObjectState) {
+  constructor(state: DurableObjectState, env: AIEnv) {
     this.state = state;
+    this.env = env;
   }
 
   private async getMeta(): Promise<RoomMeta | null> {
@@ -132,6 +137,10 @@ export class RoomDO implements DurableObject {
         return this.onStart(ws, msg);
       case "action":
         return this.onAction(ws, msg);
+      case "proposeRule":
+        return this.onProposeRule(ws, msg);
+      case "chat":
+        return this.onChat(ws, msg);
       case "rematch":
         return this.onRematch(ws);
       case "backToLobby":
@@ -162,7 +171,7 @@ export class RoomDO implements DurableObject {
     }
   }
 
-  private async onStart(ws: WebSocket, msg: { game: string; rules?: string[] }): Promise<void> {
+  private async onStart(ws: WebSocket, msg: { game: string; rules?: string[]; ruleTexts?: string[] }): Promise<void> {
     const actor = this.attachmentOf(ws);
     const meta = await this.getMeta();
     if (!actor || !meta) return;
@@ -182,7 +191,17 @@ export class RoomDO implements DurableObject {
       return this.sendError(ws, "Those house rules conflict — resolve them first.");
 
     try {
-      const state = initGame(msg.game, seats, rules, randomSeed());
+      let state = initGame(msg.game, seats, rules, randomSeed());
+      // Parse any free-text rules server-side (never trust client-parsed objects).
+      const texts = (msg.ruleTexts ?? []).slice(0, 6);
+      if (texts.length && supportsAIRules(msg.game)) {
+        const parsed = [];
+        for (const text of texts) {
+          const r = await parseWithCache(text, msg.game, this.env);
+          if (r.ok) parsed.push(r.rule);
+        }
+        if (parsed.length) state = addAIRules(msg.game, state, parsed);
+      }
       await this.saveGame({ type: msg.game, rules, state });
       this.broadcastGame();
     } catch (err) {
@@ -205,6 +224,34 @@ export class RoomDO implements DurableObject {
     if (!res.ok) return this.sendError(ws, res.error ?? "Illegal move.");
     await this.saveGame({ ...game, state: res.state });
     this.broadcastGame();
+  }
+
+  // Phase 3d — live free-text rule. Host-only; parsed + validated server-side,
+  // then applied to the running game and broadcast (it appears on the table).
+  private async onProposeRule(ws: WebSocket, msg: { text: string }): Promise<void> {
+    const actor = this.attachmentOf(ws);
+    const meta = await this.getMeta();
+    const game = await this.loadGame();
+    if (!actor || !meta || !game) return;
+    if (actor.id !== meta.hostId) return this.sendError(ws, "Only the host can add a rule mid-game.");
+    if (!supportsAIRules(game.type)) return this.sendError(ws, "This game doesn't take custom rules.");
+
+    const parsed = await parseWithCache(String(msg.text ?? ""), game.type, this.env);
+    if (!parsed.ok) return this.sendError(ws, parsed.error);
+
+    const state = addAIRules(game.type, game.state, [parsed.rule]);
+    await this.saveGame({ ...game, state });
+    // Announce it so the table sees the change (not just silently applied).
+    this.broadcastJson({ t: "notice", message: `New house rule: “${parsed.rule.raw}”` });
+    this.broadcastGame();
+  }
+
+  private onChat(ws: WebSocket, msg: { text: string }): void {
+    const actor = this.attachmentOf(ws);
+    if (!actor) return;
+    const text = String(msg.text ?? "").trim().slice(0, 300);
+    if (!text) return;
+    this.broadcastJson({ t: "chat", from: actor.name, id: actor.id, text, at: Date.now() });
   }
 
   private async onRematch(ws: WebSocket): Promise<void> {
@@ -276,8 +323,12 @@ export class RoomDO implements DurableObject {
   }
 
   private broadcastPresence(): void {
-    const msg = JSON.stringify({ t: "presence", players: this.collectPlayers() });
-    for (const ws of this.state.getWebSockets()) this.trySend(ws, msg);
+    this.broadcastJson({ t: "presence", players: this.collectPlayers() });
+  }
+
+  private broadcastJson(obj: unknown): void {
+    const data = JSON.stringify(obj);
+    for (const ws of this.state.getWebSockets()) this.trySend(ws, data);
   }
 
   private async broadcastGame(): Promise<void> {

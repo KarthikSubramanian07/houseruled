@@ -8,9 +8,10 @@ import { FeltTable } from "./FeltTable";
 import { HouseRulesPlaque } from "./HouseRulesPlaque";
 import { GameSetup } from "./game/GameSetup";
 import { GameTable } from "./game/GameTable";
+import { ChatPanel } from "./game/ChatPanel";
 import { getPlayer } from "@/lib/identity";
 import { getRoomByCode } from "@/lib/room";
-import { joinRoomChannel, type ChannelStatus, type RoomChannel } from "@/lib/realtime";
+import { joinRoomChannel, type ChannelStatus, type ChatMessage, type RoomChannel } from "@/lib/realtime";
 import type { Player, Room, SeatedPlayer } from "@/lib/types";
 import type { Action, GameView } from "@/lib/engine/types";
 
@@ -57,9 +58,12 @@ export function Lobby({ code }: { code: string }) {
   const [shareUrl, setShareUrl] = useState("");
   const [lookupFailed, setLookupFailed] = useState(false);
   const [game, setGame] = useState<GameView | null>(null);
+  const [chat, setChat] = useState<ChatMessage[]>([]);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [noticeMsg, setNoticeMsg] = useState<string | null>(null);
   const channelRef = useRef<RoomChannel | null>(null);
   const errorTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const noticeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (typeof window !== "undefined") setShareUrl(`${window.location.origin}/room/${code}`);
@@ -68,6 +72,7 @@ export function Lobby({ code }: { code: string }) {
     setRoom(undefined);
     setPlayers([]);
     setGame(null);
+    setChat([]);
     setLookupFailed(false);
 
     let channel: RoomChannel | null = null;
@@ -96,6 +101,12 @@ export function Lobby({ code }: { code: string }) {
           if (errorTimer.current) clearTimeout(errorTimer.current);
           errorTimer.current = setTimeout(() => setErrorMsg(null), 3500);
         },
+        onNotice: (m) => {
+          setNoticeMsg(m);
+          if (noticeTimer.current) clearTimeout(noticeTimer.current);
+          noticeTimer.current = setTimeout(() => setNoticeMsg(null), 4000);
+        },
+        onChat: (m) => setChat((prev) => [...prev, m].slice(-100)),
       });
       channelRef.current = channel;
     })();
@@ -142,8 +153,10 @@ export function Lobby({ code }: { code: string }) {
   }
 
   const isHost = room.hostId === player.id;
-  const startGame = (g: string, r: string[]) => channelRef.current?.startGame(g, r);
+  const startGame = (g: string, r: string[], texts: string[] = []) => channelRef.current?.startGame(g, r, texts);
   const sendAction = (a: Action) => channelRef.current?.sendAction(a);
+  const proposeRule = (text: string) => channelRef.current?.proposeRule(text);
+  const sendChat = (text: string) => channelRef.current?.sendChat(text);
   const rematch = () => channelRef.current?.rematch();
   const backToLobby = () => channelRef.current?.backToLobby();
 
@@ -161,6 +174,11 @@ export function Lobby({ code }: { code: string }) {
           {errorMsg}
         </div>
       )}
+      {noticeMsg && (
+        <div role="status" className="mx-auto mb-2 rounded-full border border-brass/50 bg-brass/15 px-4 py-1.5 text-sm text-brass">
+          {noticeMsg}
+        </div>
+      )}
 
       {game ? (
         <main className="flex flex-1 flex-col gap-6 px-4 pb-16 pt-2 sm:px-8">
@@ -168,6 +186,7 @@ export function Lobby({ code }: { code: string }) {
             view={game}
             isHost={isHost}
             onAction={sendAction}
+            onProposeRule={proposeRule}
             onRematch={rematch}
             onBackToLobby={backToLobby}
           />
@@ -203,6 +222,8 @@ export function Lobby({ code }: { code: string }) {
           </section>
         </main>
       )}
+
+      {status !== "demo" && <ChatPanel messages={chat} selfId={player.id} onSend={sendChat} />}
     </>
   );
 }

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Wordmark } from "@/components/Wordmark";
 import { HomeActions } from "@/components/HomeActions";
 import { SiteFooter } from "@/components/SiteFooter";
@@ -37,6 +38,16 @@ export default function Home() {
 
           <div className="mt-4 flex justify-center">
             <HomeActions />
+          </div>
+
+          <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm">
+            <Link href="/invent" className="text-brass no-underline transition-colors hover:text-brass-bright">
+              ✦ Invent a game with AI
+            </Link>
+            <span aria-hidden className="text-cream/20">·</span>
+            <Link href="/games" className="text-cream/60 no-underline transition-colors hover:text-cream">
+              Browse the community library
+            </Link>
           </div>
 
           {!live && (
