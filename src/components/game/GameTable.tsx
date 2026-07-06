@@ -16,12 +16,14 @@ export function GameTable({
   view,
   isHost,
   onAction,
+  onProposeRule,
   onRematch,
   onBackToLobby,
 }: {
   view: GameView;
   isHost: boolean;
   onAction: (a: Action) => void;
+  onProposeRule: (text: string) => void;
   onRematch: () => void;
   onBackToLobby: () => void;
 }) {
@@ -39,16 +41,7 @@ export function GameTable({
       </div>
 
       {/* Active house rules — always visible, the signature idea. */}
-      {view.rules.length > 0 && (
-        <div className="flex flex-wrap items-center justify-center gap-1.5">
-          <span className="plaque-header text-[10px] text-brass/60">House rules</span>
-          {view.rules.map((id) => (
-            <span key={id} className="rounded-full border border-brass/30 bg-brass/5 px-2.5 py-0.5 text-xs text-brass">
-              {getRule(id)?.label ?? id}
-            </span>
-          ))}
-        </div>
-      )}
+      <RulesBar view={view} isHost={isHost} onProposeRule={onProposeRule} />
 
       {/* Center — game-specific */}
       <div className="min-h-40 rounded-2xl border border-brass/15 bg-felt-dark/30 px-4 py-6">
@@ -78,6 +71,70 @@ export function GameTable({
           onBackToLobby={onBackToLobby}
         />
       )}
+    </div>
+  );
+}
+
+// ── House-rules bar (Phase 2 chips + Phase 3 free-text chips + host add) ──────
+function RulesBar({
+  view,
+  isHost,
+  onProposeRule,
+}: {
+  view: GameView;
+  isHost: boolean;
+  onProposeRule: (text: string) => void;
+}) {
+  const [text, setText] = useState("");
+  const [adding, setAdding] = useState(false);
+  const supportsAI = view.aiRules !== undefined;
+  const hasRules = view.rules.length > 0 || (view.aiRules?.length ?? 0) > 0;
+
+  function submit() {
+    const t = text.trim();
+    if (!t) return;
+    onProposeRule(t);
+    setText("");
+    setAdding(false);
+  }
+
+  return (
+    <div className="flex flex-col items-center gap-2">
+      {hasRules && (
+        <div className="flex flex-wrap items-center justify-center gap-1.5">
+          <span className="plaque-header text-[10px] text-brass/60">House rules</span>
+          {view.rules.map((id) => (
+            <span key={id} className="rounded-full border border-brass/30 bg-brass/5 px-2.5 py-0.5 text-xs text-brass">
+              {getRule(id)?.label ?? id}
+            </span>
+          ))}
+          {view.aiRules?.map((r) => (
+            <span key={r.id} title={r.summary} className="rounded-full border border-brass/40 bg-brass/10 px-2.5 py-0.5 text-xs text-brass">
+              ✦ {r.raw}
+            </span>
+          ))}
+        </div>
+      )}
+      {isHost && supportsAI && !view.status.over &&
+        (adding ? (
+          <div className="flex items-center gap-2">
+            <input
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && submit()}
+              autoFocus
+              placeholder="e.g. tens skip the next player"
+              maxLength={200}
+              className="felt-panel w-64 rounded-full px-3 py-1 text-xs text-cream placeholder:text-cream/30"
+            />
+            <button onClick={submit} className="text-xs text-brass hover:text-brass-bright">Add</button>
+            <button onClick={() => setAdding(false)} className="text-xs text-cream/40">cancel</button>
+          </div>
+        ) : (
+          <button onClick={() => setAdding(true)} className="text-xs text-cream/45 transition-colors hover:text-brass">
+            ✦ add a house rule (plain English)
+          </button>
+        ))}
     </div>
   );
 }

@@ -16,11 +16,13 @@ export interface JoinOptions {
   onGame: (view: GameView | null) => void;
   onStatus?: (status: ChannelStatus) => void;
   onError?: (message: string) => void;
+  onNotice?: (message: string) => void;
 }
 
 export interface RoomChannel {
-  startGame(game: string, rules: string[]): void;
+  startGame(game: string, rules: string[], ruleTexts?: string[]): void;
   sendAction(action: Action): void;
+  proposeRule(text: string): void;
   rematch(): void;
   backToLobby(): void;
   destroy(): Promise<void>;
@@ -51,7 +53,7 @@ export function toSeats(players: PresenceState[], selfId: string): SeatedPlayer[
 }
 
 export function joinRoomChannel(opts: JoinOptions): RoomChannel {
-  const { code, player, onPlayers, onGame, onStatus, onError } = opts;
+  const { code, player, onPlayers, onGame, onStatus, onError, onNotice } = opts;
 
   // ── Demo mode: no Worker, so seat the local player; games need the backend. ──
   if (!HAS_REMOTE_BACKEND) {
@@ -61,6 +63,7 @@ export function joinRoomChannel(opts: JoinOptions): RoomChannel {
     return {
       startGame: () => onError?.("Games run on the live backend — deploy or run `wrangler dev`."),
       sendAction: () => {},
+      proposeRule: () => onError?.("Custom rules need the live backend."),
       rematch: () => {},
       backToLobby: () => {},
       destroy: async () => {},
@@ -102,14 +105,16 @@ export function joinRoomChannel(opts: JoinOptions): RoomChannel {
     if (msg.t === "presence" && Array.isArray(msg.players)) onPlayers(toSeats(msg.players, player.id));
     else if (msg.t === "game") onGame(msg.view ?? null);
     else if (msg.t === "error" && msg.message) onError?.(msg.message);
+    else if (msg.t === "notice" && msg.message) onNotice?.(msg.message);
   };
 
   ws.onerror = () => { if (!destroyed) onStatus?.("error"); };
   ws.onclose = () => { if (!destroyed) onStatus?.("error"); };
 
   return {
-    startGame: (game, rules) => send({ t: "start", game, rules }),
+    startGame: (game, rules, ruleTexts) => send({ t: "start", game, rules, ruleTexts }),
     sendAction: (action) => send({ t: "action", action }),
+    proposeRule: (text) => send({ t: "proposeRule", text }),
     rematch: () => send({ t: "rematch" }),
     backToLobby: () => send({ t: "backToLobby" }),
     async destroy() {
