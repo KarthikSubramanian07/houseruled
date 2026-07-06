@@ -34,7 +34,7 @@ export default function Home() {
             <span className="text-brass">Any deck.</span>
           </h1>
 
-          <p className="max-w-xl text-base leading-relaxed text-cream/70 sm:text-lg">
+          <p className="w-full max-w-xl text-base leading-relaxed text-balance text-cream/70 sm:text-lg">
             Pull up a chair, deal a hand, and bend the rules however your table
             likes. Start a game, share the link, and play with friends in seconds.
           </p>
@@ -44,7 +44,7 @@ export default function Home() {
           </div>
 
           {!live && (
-            <p className="mt-2 max-w-md text-xs leading-relaxed text-cream/40">
+            <p className="mt-2 w-full max-w-md text-xs leading-relaxed text-cream/40">
               Running in <span className="text-cream/60">table-demo mode</span> —
               this is a local <code className="text-cream/60">next dev</code>{" "}
               build. Deploy to Cloudflare (or run{" "}

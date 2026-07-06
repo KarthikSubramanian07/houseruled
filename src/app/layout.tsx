@@ -33,6 +33,7 @@ export const metadata: Metadata = {
   },
   description: DESCRIPTION,
   applicationName: "Houseruled",
+  formatDetection: { telephone: false, email: false, address: false },
   keywords: [
     "card games",
     "online card games",
