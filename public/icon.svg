@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Houseruled">
+  <defs>
+    <radialGradient id="felt" cx="50%" cy="34%" r="80%">
+      <stop offset="0%" stop-color="#155038"/>
+      <stop offset="60%" stop-color="#0F3D2E"/>
+      <stop offset="100%" stop-color="#0A2A1F"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#felt)"/>
+  <rect x="40" y="40" width="432" height="432" rx="84" fill="none" stroke="#C9A24B" stroke-opacity="0.35" stroke-width="6"/>
+  <!-- Monogram H, built from bars so it renders crisply everywhere -->
+  <g fill="#C9A24B">
+    <rect x="150" y="140" width="58" height="232" rx="10"/>
+    <rect x="304" y="140" width="58" height="232" rx="10"/>
+    <rect x="150" y="227" width="212" height="58" rx="10"/>
+  </g>
+  <!-- brass "rule" underline -->
+  <rect x="150" y="388" width="212" height="10" rx="5" fill="#C9A24B" fill-opacity="0.8"/>
+</svg>
