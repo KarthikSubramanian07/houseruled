@@ -1,29 +1,30 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Wordmark } from "./Wordmark";
 import { Button, ButtonLink } from "./Button";
 import { FeltTable } from "./FeltTable";
 import { HouseRulesPlaque } from "./HouseRulesPlaque";
+import { GameSetup } from "./game/GameSetup";
+import { GameTable } from "./game/GameTable";
 import { getPlayer } from "@/lib/identity";
 import { getRoomByCode } from "@/lib/room";
 import { joinRoomChannel, type ChannelStatus, type RoomChannel } from "@/lib/realtime";
 import type { Player, Room, SeatedPlayer } from "@/lib/types";
+import type { Action, GameView } from "@/lib/engine/types";
 
 function CopyButton({ value, label }: { value: string; label: string }) {
   const [copied, setCopied] = useState(false);
-
   async function copy() {
     try {
       await navigator.clipboard.writeText(value);
       setCopied(true);
       setTimeout(() => setCopied(false), 1600);
     } catch {
-      // Clipboard blocked (e.g. insecure context) — fail quietly.
+      /* clipboard blocked */
     }
   }
-
   return (
     <Button variant="quiet" size="md" onClick={copy} aria-live="polite">
       {copied ? "Copied ✓" : label}
@@ -50,26 +51,23 @@ function StatusPill({ status }: { status: ChannelStatus }) {
 
 export function Lobby({ code }: { code: string }) {
   const [player, setPlayer] = useState<Player | null>(null);
-  // undefined = still looking up · null = no such table · Room = found
   const [room, setRoom] = useState<Room | null | undefined>(undefined);
   const [players, setPlayers] = useState<SeatedPlayer[]>([]);
   const [status, setStatus] = useState<ChannelStatus>("connecting");
   const [shareUrl, setShareUrl] = useState("");
-  // Distinct from a null room (which means "no such table"): the lookup itself
-  // failed (network/service), so we offer a retry rather than a dead end.
   const [lookupFailed, setLookupFailed] = useState(false);
+  const [game, setGame] = useState<GameView | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const channelRef = useRef<RoomChannel | null>(null);
+  const errorTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      setShareUrl(`${window.location.origin}/room/${code}`);
-    }
-
+    if (typeof window !== "undefined") setShareUrl(`${window.location.origin}/room/${code}`);
     const p = getPlayer();
     setPlayer(p);
-
-    // Reset per-code state so navigating between tables shows loading, not stale.
     setRoom(undefined);
     setPlayers([]);
+    setGame(null);
     setLookupFailed(false);
 
     let channel: RoomChannel | null = null;
@@ -85,62 +83,56 @@ export function Lobby({ code }: { code: string }) {
         return;
       }
       if (cancelled) return;
-      if (!found) {
-        setRoom(null);
-        return;
-      }
+      if (!found) { setRoom(null); return; }
       setRoom(found);
       channel = joinRoomChannel({
         code,
         player: p,
         onPlayers: setPlayers,
         onStatus: setStatus,
+        onGame: setGame,
+        onError: (m) => {
+          setErrorMsg(m);
+          if (errorTimer.current) clearTimeout(errorTimer.current);
+          errorTimer.current = setTimeout(() => setErrorMsg(null), 3500);
+        },
       });
+      channelRef.current = channel;
     })();
 
     return () => {
       cancelled = true;
+      channelRef.current = null;
       void channel?.destroy();
     };
   }, [code]);
 
-  // ── Lookup failed (network / service) — offer a retry, not a dead end ────────
   if (lookupFailed) {
     return (
       <main className="flex flex-1 flex-col items-center justify-center gap-6 px-6 text-center">
         <p className="font-display text-5xl text-brass">Trouble reaching the table</p>
         <p className="max-w-sm text-cream/70">
           We couldn&apos;t look up table{" "}
-          <span className="tabular font-display tracking-widest text-cream">{code}</span>{" "}
-          just now. It&apos;s probably a hiccup — give it another shuffle.
+          <span className="tabular font-display tracking-widest text-cream">{code}</span> just now.
+          It&apos;s probably a hiccup — give it another shuffle.
         </p>
-        <Button size="lg" onClick={() => window.location.reload()}>
-          Try again
-        </Button>
+        <Button size="lg" onClick={() => window.location.reload()}>Try again</Button>
       </main>
     );
   }
-
-  // ── Table not found ─────────────────────────────────────────────────────────
   if (room === null) {
     return (
       <main className="flex flex-1 flex-col items-center justify-center gap-6 px-6 text-center">
         <p className="font-display text-5xl text-brass">No table here</p>
         <p className="max-w-sm text-cream/70">
           Nobody&apos;s dealt a game at{" "}
-          <span className="tabular font-display tracking-widest text-cream">
-            {code}
-          </span>
-          . The code might be mistyped, or the table may have folded.
+          <span className="tabular font-display tracking-widest text-cream">{code}</span>. The code
+          might be mistyped, or the table may have folded.
         </p>
-        <ButtonLink href="/" size="lg">
-          Start your own table
-        </ButtonLink>
+        <ButtonLink href="/" size="lg">Start your own table</ButtonLink>
       </main>
     );
   }
-
-  // ── Loading ──────────────────────────────────────────────────────────────────
   if (room === undefined || !player) {
     return (
       <main className="flex flex-1 items-center justify-center px-6">
@@ -150,69 +142,67 @@ export function Lobby({ code }: { code: string }) {
   }
 
   const isHost = room.hostId === player.id;
+  const startGame = (g: string, r: string[]) => channelRef.current?.startGame(g, r);
+  const sendAction = (a: Action) => channelRef.current?.sendAction(a);
+  const rematch = () => channelRef.current?.rematch();
+  const backToLobby = () => channelRef.current?.backToLobby();
 
   return (
     <>
       <header className="flex items-center justify-between px-6 py-5 sm:px-10">
         <Wordmark size="sm" />
-        <Link
-          href="/"
-          className="text-sm text-cream/55 no-underline transition-colors hover:text-cream"
-        >
+        <Link href="/" className="text-sm text-cream/55 no-underline transition-colors hover:text-cream">
           Leave table
         </Link>
       </header>
 
-      <main className="flex flex-1 flex-col gap-8 px-5 pb-16 sm:px-8">
-        {/* Room code + sharing */}
-        <section className="flex flex-col items-center gap-4 text-center">
-          <div className="flex flex-col items-center gap-1">
-            <span className="text-xs uppercase tracking-[0.3em] text-cream/45">
-              Table code
-            </span>
-            <span className="tabular font-display text-6xl font-semibold tracking-[0.2em] text-brass sm:text-7xl">
-              {code}
-            </span>
-          </div>
-          <div className="flex flex-wrap items-center justify-center gap-3">
-            <CopyButton value={code} label="Copy code" />
-            {shareUrl && <CopyButton value={shareUrl} label="Copy invite link" />}
-          </div>
-          <StatusPill status={status} />
-        </section>
+      {errorMsg && (
+        <div role="alert" className="mx-auto mb-2 rounded-full border border-ember/50 bg-ember/15 px-4 py-1.5 text-sm text-ember">
+          {errorMsg}
+        </div>
+      )}
 
-        {/* The table + the plaque */}
-        <section className="mx-auto flex w-full max-w-5xl flex-col items-center gap-10 lg:flex-row lg:items-start lg:justify-center">
-          <div className="w-full flex-1">
-            <FeltTable players={players} />
-            <p className="mt-2 text-center text-sm text-cream/50">
-              {players.length === 1
-                ? "You're the only one at the table."
-                : `${players.length} players at the table.`}
-            </p>
-          </div>
+      {game ? (
+        <main className="flex flex-1 flex-col gap-6 px-4 pb-16 pt-2 sm:px-8">
+          <GameTable
+            view={game}
+            isHost={isHost}
+            onAction={sendAction}
+            onRematch={rematch}
+            onBackToLobby={backToLobby}
+          />
+        </main>
+      ) : (
+        <main className="flex flex-1 flex-col gap-10 px-5 pb-16 sm:px-8">
+          <section className="flex flex-col items-center gap-4 text-center">
+            <div className="flex flex-col items-center gap-1">
+              <span className="text-xs uppercase tracking-[0.3em] text-cream/45">Table code</span>
+              <span className="tabular font-display text-6xl font-semibold tracking-[0.2em] text-brass sm:text-7xl">
+                {code}
+              </span>
+            </div>
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <CopyButton value={code} label="Copy code" />
+              {shareUrl && <CopyButton value={shareUrl} label="Copy invite link" />}
+            </div>
+            <StatusPill status={status} />
+          </section>
 
-          <div className="flex w-full flex-col items-center gap-6 lg:w-auto">
-            <HouseRulesPlaque />
-
-            {isHost ? (
-              <div className="flex flex-col items-center gap-2">
-                <Button size="lg" disabled className="w-full">
-                  Deal the first hand
-                </Button>
-                <p className="max-w-xs text-center text-xs text-cream/45">
-                  Games arrive in the next deal — War, Go Fish, Crazy Eights and
-                  more are Phase 1.
-                </p>
-              </div>
-            ) : (
-              <p className="max-w-xs text-center text-sm text-cream/50">
-                Waiting for the host to deal the first hand.
+          <section className="mx-auto flex w-full max-w-5xl flex-col items-center gap-10 lg:flex-row lg:items-start lg:justify-center">
+            <div className="w-full flex-1">
+              <FeltTable players={players} />
+              <p className="mt-2 text-center text-sm text-cream/50">
+                {players.length === 1 ? "You're the only one at the table." : `${players.length} players at the table.`}
               </p>
-            )}
-          </div>
-        </section>
-      </main>
+            </div>
+            <HouseRulesPlaque />
+          </section>
+
+          <section className="mx-auto w-full">
+            <GameSetup playerCount={players.length} isHost={isHost} onStart={startGame} />
+          </section>
+        </main>
+      )}
     </>
   );
 }
