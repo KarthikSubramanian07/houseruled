@@ -16,9 +16,11 @@ export function makeRng(seed: number): RNG {
   };
 }
 
-/** A crypto-random 32-bit seed (falls back to Math.random on ancient runtimes). */
+/** A crypto-random 32-bit seed (falls back to Math.random on ancient runtimes).
+ *  References the `crypto` global directly so it types under both the DOM and
+ *  the Cloudflare Workers runtime. */
 export function randomSeed(): number {
-  const c = typeof globalThis !== "undefined" ? globalThis.crypto : undefined;
+  const c = typeof crypto !== "undefined" ? crypto : undefined;
   if (c?.getRandomValues) {
     const b = new Uint32Array(1);
     c.getRandomValues(b);
