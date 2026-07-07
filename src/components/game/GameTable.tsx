@@ -169,6 +169,11 @@ function OpponentBadge({ p, type }: { p: PlayerPublic; type: string }) {
           {p.extra?.bid == null ? "bidding…" : `bid ${String(p.extra.bid)} · won ${String(p.extra.won ?? 0)}`}
         </span>
       )}
+      {type === "euchre" && (
+        <span className="text-xs text-brass/80">
+          Team {p.extra?.team === 0 ? "A" : "B"}{p.extra?.isMaker ? " · maker" : ""}
+        </span>
+      )}
     </div>
   );
 }
@@ -299,26 +304,67 @@ function Center({ view, onAction }: { view: GameView; onAction: (a: Action) => v
         </div>
       );
     }
+    case "euchre": {
+      const trick = (c.trick as { card: Card; name: string }[]) ?? [];
+      const trump = c.trump as Suit | null;
+      const phase = c.phase as string;
+      const tw = (c.tricksWon as [number, number]) ?? [0, 0];
+      const myTurn = view.turn === view.you;
+      if (phase === "bid1" || phase === "bid2") {
+        return (
+          <div className="flex flex-col items-center gap-2">
+            <span className="text-xs uppercase tracking-widest text-cream/45">Turned up</span>
+            <PlayingCard card={c.turned as Card} size="lg" />
+            <span className="text-xs text-cream/50">
+              {phase === "bid1" ? "Order it up as trump, or pass." : "Name a different suit, or pass."}
+            </span>
+          </div>
+        );
+      }
+      if (phase === "discard") return <p className="text-center text-sm text-cream/50">{String(c.dealerName)} is discarding…</p>;
+      return (
+        <div className="flex flex-col items-center gap-3">
+          <div className="flex min-h-24 items-center justify-center gap-3">
+            {trick.length === 0 ? (
+              <span className="text-sm text-cream/45">{myTurn ? "Lead a card." : "Waiting…"}</span>
+            ) : (
+              trick.map((p, i) => (
+                <div key={i} className="deal-in flex flex-col items-center gap-1">
+                  <PlayingCard card={p.card} size="md" />
+                  <span className="max-w-16 truncate text-xs text-cream/55">{p.name}</span>
+                </div>
+              ))
+            )}
+          </div>
+          <span className="text-xs text-cream/45">
+            Trump {trump ? SUIT_SYMBOL[trump] : "?"} · Trick {(c.trickCount as number) + 1} / 5 · A {tw[0]} – B {tw[1]}
+          </span>
+        </div>
+      );
+    }
     default:
       return null;
   }
 }
 
 // ── Your hand ─────────────────────────────────────────────────────────────────
-const CARD_PLAY = new Set(["crazyeights", "hearts", "spades"]);
+const CARD_PLAY = new Set(["crazyeights", "hearts", "spades", "euchre"]);
 
 function Hand({ view, onAction }: { view: GameView; onAction: (a: Action) => void }) {
   const [wild, setWild] = useState<Card | null>(null);
   const isCardPlay = CARD_PLAY.has(view.type);
+  // Actions that come with a card: play (all card games) or discard (euchre dealer).
   const playMap = new Map(
-    isCardPlay ? view.legal.filter((a) => a.type === "play").map((a) => [key(a.card as Card), a] as const) : [],
+    isCardPlay
+      ? view.legal.filter((a) => a.card && (a.type === "play" || a.type === "discard")).map((a) => [key(a.card as Card), a] as const)
+      : [],
   );
 
   function clickCard(card: Card) {
     const a = playMap.get(key(card));
     if (!a) return;
     if ((a as { wild?: boolean }).wild) setWild(card); // crazyeights 8 / AI-wild
-    else onAction({ type: "play", card });
+    else onAction(a as Action);
   }
 
   return (
@@ -387,6 +433,41 @@ function ActionBar({ view, onAction }: { view: GameView; onAction: (a: Action) =
   }
   if (view.type === "gofish" && has("ask")) {
     return <GoFishAsk view={view} onAction={onAction} />;
+  }
+  if (view.type === "euchre") {
+    if (has("orderup")) {
+      const up = (view.center.turned as Card)?.s;
+      return (
+        <div className="flex gap-3">
+          <Button size="lg" onClick={() => onAction({ type: "orderup" })}>
+            Order up {up ? SUIT_SYMBOL[up] : ""}
+          </Button>
+          <Button variant="quiet" size="lg" onClick={() => onAction({ type: "pass" })}>Pass</Button>
+        </div>
+      );
+    }
+    if (has("call")) {
+      const calls = legal.filter((a) => a.type === "call");
+      return (
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          <span className="mr-1 text-xs text-cream/60">Name trump:</span>
+          {calls.map((a) => {
+            const s = a.suit as Suit;
+            return (
+              <button
+                key={s}
+                onClick={() => onAction({ type: "call", suit: s })}
+                className={`grid h-10 w-10 place-items-center rounded-lg bg-cream text-2xl ${isRed(s) ? "text-ember" : "text-ink"} hover:ring-2 hover:ring-brass`}
+              >
+                {SUIT_SYMBOL[s]}
+              </button>
+            );
+          })}
+          {has("pass") && <Button variant="quiet" size="md" onClick={() => onAction({ type: "pass" })}>Pass</Button>}
+        </div>
+      );
+    }
+    return null;
   }
   if (view.type === "spades" && has("bid")) {
     return (
