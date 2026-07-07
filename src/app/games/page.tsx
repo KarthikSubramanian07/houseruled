@@ -1,81 +1,125 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Wordmark } from "@/components/Wordmark";
-import { Button, ButtonLink } from "@/components/Button";
+import { SiteHeader } from "@/components/SiteHeader";
+import { SiteFooter } from "@/components/SiteFooter";
+import { ButtonLink } from "@/components/Button";
+import { FavoriteButton } from "@/components/FavoriteButton";
 import { GAME_CATALOG } from "@/lib/engine/registry";
-import { startCustomTable } from "@/lib/play";
+import { getPlayer } from "@/lib/identity";
 
 interface LibGame {
   slug: string;
   title: string;
   baseGame: string;
-  ruleTexts: string[];
   explanation: string;
   plays: number;
+  creatorId: string | null;
+  creatorName: string | null;
 }
 
 export default function GamesPage() {
-  const router = useRouter();
   const [games, setGames] = useState<LibGame[] | null>(null);
+  const [favs, setFavs] = useState<Set<string>>(new Set());
+  const [search, setSearch] = useState("");
+  const [base, setBase] = useState("");
+  const [sort, setSort] = useState<"plays" | "new">("plays");
+
+  const load = useCallback(() => {
+    const params = new URLSearchParams();
+    if (search.trim()) params.set("search", search.trim());
+    if (base) params.set("base", base);
+    params.set("sort", sort);
+    params.set("user", getPlayer().id);
+    fetch(`/api/games?${params}`)
+      .then((r) => r.json())
+      .then((d: { games?: LibGame[]; favorites?: string[] }) => {
+        setGames(d.games ?? []);
+        setFavs(new Set(d.favorites ?? []));
+      })
+      .catch(() => setGames([]));
+  }, [search, base, sort]);
 
   useEffect(() => {
-    fetch("/api/games")
-      .then((r) => r.json())
-      .then((d: { games?: LibGame[] }) => setGames(d.games ?? []))
-      .catch(() => setGames([]));
-  }, []);
+    const t = setTimeout(load, 250); // debounce typing
+    return () => clearTimeout(t);
+  }, [load]);
 
   return (
     <>
-      <header className="flex items-center justify-between px-6 py-5 sm:px-10">
-        <Wordmark size="sm" />
-        <Link href="/invent" className="text-sm text-brass no-underline hover:text-brass-bright">
-          + Invent a game
-        </Link>
-      </header>
+      <SiteHeader />
       <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-5 pb-16 pt-4 sm:px-8">
         <div className="text-center">
           <h1 className="font-display text-4xl text-cream">The community library</h1>
-          <p className="mt-2 text-sm text-cream/60">Custom games invented by players. Most-played first.</p>
+          <p className="mt-2 text-sm text-cream/60">Games dreamed up by players. Steal them, remix them, make them yours.</p>
+        </div>
+
+        {/* Search + filters */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search games…"
+            className="felt-panel min-w-0 flex-1 rounded-full px-4 py-2 text-sm text-cream placeholder:text-cream/30"
+          />
+          <select
+            value={base}
+            onChange={(e) => setBase(e.target.value)}
+            className="felt-panel rounded-full px-3 py-2 text-sm text-cream"
+          >
+            <option value="">All base games</option>
+            {GAME_CATALOG.map((g) => (
+              <option key={g.type} value={g.type}>{g.name}</option>
+            ))}
+          </select>
+          <div className="flex overflow-hidden rounded-full border border-brass/25 text-sm">
+            {(["plays", "new"] as const).map((s) => (
+              <button
+                key={s}
+                onClick={() => setSort(s)}
+                className={`px-4 py-2 transition-colors ${sort === s ? "bg-brass/20 text-brass" : "text-cream/50 hover:text-cream"}`}
+              >
+                {s === "plays" ? "Top" : "New"}
+              </button>
+            ))}
+          </div>
         </div>
 
         {games === null ? (
           <p className="text-center text-cream/50">Loading…</p>
         ) : games.length === 0 ? (
           <div className="flex flex-col items-center gap-4 py-10 text-center">
-            <p className="text-cream/60">No games yet — be the first.</p>
+            <p className="text-cream/60">{search || base ? "Nothing matches — try a different search." : "No games yet — be the first to invent one."}</p>
             <ButtonLink href="/invent" size="lg">Invent a game</ButtonLink>
           </div>
         ) : (
           <ul className="flex flex-col gap-2">
             {games.map((g) => (
-              <li key={g.slug} className="felt-panel flex flex-col gap-2 rounded-xl p-4 sm:flex-row sm:items-center sm:justify-between">
+              <li key={g.slug} className="felt-panel flex items-start justify-between gap-3 rounded-xl p-4">
                 <div className="min-w-0">
-                  <div className="flex items-baseline gap-2">
-                    <span className="font-display text-lg text-cream">{g.title}</span>
+                  <div className="flex flex-wrap items-baseline gap-x-2">
+                    <Link href={`/game/${g.slug}`} className="font-display text-lg text-cream no-underline hover:text-brass">{g.title}</Link>
                     <span className="text-xs text-cream/40">
                       on {GAME_CATALOG.find((c) => c.type === g.baseGame)?.name ?? g.baseGame}
+                      {g.creatorName && g.creatorId && (
+                        <> · by <Link href={`/u/${g.creatorId}`} className="text-brass/70 no-underline hover:text-brass">{g.creatorName}</Link></>
+                      )}
                     </span>
                   </div>
                   <p className="mt-0.5 line-clamp-2 text-sm text-cream/60">{g.explanation}</p>
                   <p className="tabular mt-1 text-xs text-brass/70">{g.plays} plays</p>
                 </div>
-                <div className="flex shrink-0 gap-2">
-                  <Button variant="quiet" size="md" onClick={() => router.push(`/game/${g.slug}`)}>
-                    View
-                  </Button>
-                  <Button size="md" onClick={() => startCustomTable((h) => router.push(h), g.baseGame, g.ruleTexts)}>
-                    Play
-                  </Button>
+                <div className="flex shrink-0 flex-col items-end gap-2">
+                  <FavoriteButton slug={g.slug} initial={favs.has(g.slug)} />
+                  <ButtonLink href={`/game/${g.slug}`} size="md">Play</ButtonLink>
                 </div>
               </li>
             ))}
           </ul>
         )}
       </main>
+      <SiteFooter />
     </>
   );
 }

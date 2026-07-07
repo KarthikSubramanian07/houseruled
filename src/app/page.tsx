@@ -1,9 +1,8 @@
 import Link from "next/link";
-import { Wordmark } from "@/components/Wordmark";
+import { SiteHeader } from "@/components/SiteHeader";
 import { HomeActions } from "@/components/HomeActions";
 import { SiteFooter } from "@/components/SiteFooter";
 import { AdSlot } from "@/components/AdSense";
-import { DonateLink } from "@/components/DonateLink";
 import { HAS_REMOTE_BACKEND } from "@/lib/env";
 
 export default function Home() {
@@ -11,17 +10,14 @@ export default function Home() {
 
   return (
     <>
-      <header className="flex items-center justify-between px-6 py-5 sm:px-10">
-        <Wordmark size="sm" />
-        <DonateLink />
-      </header>
+      <SiteHeader />
 
       <main className="flex flex-1 flex-col items-center justify-center px-6 pb-20 pt-6 text-center">
         {/* w-full constrains the column to the padded viewport so the copy wraps
             instead of growing to its max-width and clipping on narrow screens. */}
         <div className="flex w-full max-w-2xl flex-col items-center gap-6">
           <h1
-            className="font-display font-semibold leading-[0.95] tracking-tight text-cream"
+            className="font-display font-semibold leading-[1.08] tracking-tight text-cream"
             style={{ fontSize: "var(--text-hero)" }}
           >
             Your rules.

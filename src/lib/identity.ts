@@ -61,3 +61,17 @@ export function getPlayer(): Player {
 
   return { id, name };
 }
+
+/** Rename the local player. Returns the trimmed name actually stored. */
+export function setPlayerName(name: string): string {
+  const trimmed = name.trim().slice(0, 24);
+  const finalName = trimmed.length > 0 ? trimmed : randomPlayerName();
+  if (typeof window !== "undefined") {
+    try {
+      window.localStorage.setItem(NAME_KEY, finalName);
+    } catch {
+      // Ignore — won't persist, but the session still uses it.
+    }
+  }
+  return finalName;
+}

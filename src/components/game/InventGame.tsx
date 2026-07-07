@@ -49,10 +49,11 @@ export function InventGame() {
     if (!game) return;
     setSaving(true);
     try {
+      const me = getPlayer();
       const res = await fetch("/api/games", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ ...game, creatorId: getPlayer().id }),
+        body: JSON.stringify({ ...game, creatorId: me.id, creatorName: me.name }),
       });
       const data = (await res.json()) as { ok: boolean; slug?: string };
       if (data.ok && data.slug) setSavedSlug(data.slug);

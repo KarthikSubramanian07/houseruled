@@ -44,6 +44,7 @@ type ClientMessage =
   | { t: "action"; action: Action }
   | { t: "proposeRule"; text: string }
   | { t: "chat"; text: string }
+  | { t: "rename"; name: string }
   | { t: "rematch" }
   | { t: "backToLobby" };
 
@@ -141,6 +142,8 @@ export class RoomDO implements DurableObject {
         return this.onProposeRule(ws, msg);
       case "chat":
         return this.onChat(ws, msg);
+      case "rename":
+        return this.onRename(ws, msg);
       case "rematch":
         return this.onRematch(ws);
       case "backToLobby":
@@ -244,6 +247,15 @@ export class RoomDO implements DurableObject {
     // Announce it so the table sees the change (not just silently applied).
     this.broadcastJson({ t: "notice", message: `New house rule: “${parsed.rule.raw}”` });
     this.broadcastGame();
+  }
+
+  private onRename(ws: WebSocket, msg: { name: string }): void {
+    const att = this.attachmentOf(ws);
+    if (!att) return;
+    const name = String(msg.name ?? "").trim().slice(0, 24);
+    if (!name) return;
+    ws.serializeAttachment({ ...att, name });
+    this.broadcastPresence(); // in-game seat labels are fixed at deal time
   }
 
   private onChat(ws: WebSocket, msg: { text: string }): void {

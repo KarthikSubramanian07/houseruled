@@ -32,6 +32,7 @@ export interface RoomChannel {
   sendAction(action: Action): void;
   proposeRule(text: string): void;
   sendChat(text: string): void;
+  setName(name: string): void;
   rematch(): void;
   backToLobby(): void;
   destroy(): Promise<void>;
@@ -74,6 +75,7 @@ export function joinRoomChannel(opts: JoinOptions): RoomChannel {
       sendAction: () => {},
       proposeRule: () => onError?.("Custom rules need the live backend."),
       sendChat: () => {},
+      setName: () => {},
       rematch: () => {},
       backToLobby: () => {},
       destroy: async () => {},
@@ -132,6 +134,7 @@ export function joinRoomChannel(opts: JoinOptions): RoomChannel {
     sendAction: (action) => send({ t: "action", action }),
     proposeRule: (text) => send({ t: "proposeRule", text }),
     sendChat: (text) => send({ t: "chat", text }),
+    setName: (name) => send({ t: "rename", name }),
     rematch: () => send({ t: "rematch" }),
     backToLobby: () => send({ t: "backToLobby" }),
     async destroy() {
