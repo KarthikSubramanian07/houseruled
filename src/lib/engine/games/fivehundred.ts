@@ -110,6 +110,12 @@ export function legalPlays(hand: Card[], trick: PlayedCard[], bid: Bid): Card[] 
   if (trick.length === 0) return hand.slice();
   const led = effSuit(trick[0].card, bid);
   const following = hand.filter((c) => effSuit(c, bid) === led);
+  // No-trump: the Joker is the top card and may be played at any time, even when
+  // you could follow the led suit.
+  if (bid === "NT" && following.length > 0) {
+    const joker = hand.find(isJoker);
+    if (joker && !following.some(isJoker)) return [...following, joker];
+  }
   return following.length > 0 ? following : hand.slice();
 }
 

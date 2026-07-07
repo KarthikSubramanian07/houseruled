@@ -6,7 +6,7 @@
 import { standardDeck, shuffle, type Card, type Suit, type Rank } from "../cards";
 import { makeRng } from "../rng";
 import { nextActiveIndex, type ApplyResult, type GameDefinition, type GameStatus, type GameView, type SeatInfo } from "../types";
-import { followSuit, trickWinner, trickRank, type PlayedCard } from "./tricks";
+import { trickWinner, trickRank, type PlayedCard } from "./tricks";
 
 const HAND = 6;
 const gamePts = (r: Rank) => ({ 1: 4, 13: 3, 12: 2, 11: 1, 10: 10 } as Record<number, number>)[r] ?? 0;
@@ -121,9 +121,17 @@ export const pitch: GameDefinition<PitchState> = {
     }
     if (seat !== state.turn) return [];
     const hand = state.hands[seat];
-    // First lead sets trump → any card. Otherwise follow the led suit.
+    // First lead sets trump → any card.
     if (state.trick.length === 0) return hand.map((card) => ({ type: "play", card }));
-    return followSuit(hand, state.trick[0].card.s).map((card) => ({ type: "play", card }));
+    // Otherwise follow the led suit — but a player may ALWAYS trump in (Auction
+    // Pitch), and if void of the led suit may play anything.
+    const led = state.trick[0].card.s;
+    const canFollow = hand.filter((c) => c.s === led);
+    if (canFollow.length === 0) return hand.map((card) => ({ type: "play", card }));
+    const legal = state.trump && state.trump !== led
+      ? [...canFollow, ...hand.filter((c) => c.s === state.trump)]
+      : canFollow;
+    return legal.map((card) => ({ type: "play", card }));
   },
 
   apply(state, actor, action): ApplyResult<PitchState> {

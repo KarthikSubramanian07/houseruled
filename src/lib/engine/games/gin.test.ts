@@ -56,6 +56,19 @@ describe("gin game", () => {
     expect(total(s)).toBe(52);
   });
 
+  it("rejects a 'gin' when the hand still has deadwood", () => {
+    let s = gin.init(seats, [], 1);
+    // 11 unmelded cards in the discard phase; discarding any leaves deadwood > 0,
+    // so a forged {type:'gin'} must be rejected (not scored as a knock).
+    const junk: Card[] = [
+      { r: 2, s: "S" }, { r: 4, s: "H" }, { r: 6, s: "D" }, { r: 8, s: "C" }, { r: 10, s: "S" },
+      { r: 12, s: "H" }, { r: 1, s: "D" }, { r: 3, s: "C" }, { r: 5, s: "S" }, { r: 7, s: "H" }, { r: 9, s: "D" },
+    ];
+    s = { ...s, phase: "discard", turn: 0, hands: [junk, s.hands[1]] };
+    const r = gin.apply(s, "a", { type: "gin", card: { r: 2, s: "S" } });
+    expect(r.ok).toBe(false);
+  });
+
   it("plays out (draw/discard, knock when able) to a result, conserving 52", () => {
     for (const seed of [1, 2, 5, 8, 13, 21]) {
       let s = gin.init(seats, [], seed);

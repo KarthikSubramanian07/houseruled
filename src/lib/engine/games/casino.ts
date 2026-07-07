@@ -211,6 +211,7 @@ export const casino: GameDefinition<CasinoState> = {
     if (action.type === "capture") {
       const targets = (action.targets as Card[]) ?? [];
       if (targets.length === 0) return { state, ok: false, error: "Choose cards to capture." };
+      if (new Set(targets.map(key)).size !== targets.length) return { state, ok: false, error: "Duplicate cards in that capture." };
       const tableKeys = new Set(table.map(key));
       if (!targets.every((t) => tableKeys.has(key(t)))) return { state, ok: false, error: "Those cards aren't on the table." };
       if (!partitionable(targets, numVal(card), card.r)) return { state, ok: false, error: "That set doesn't pair or sum to your card." };
@@ -234,7 +235,7 @@ export const casino: GameDefinition<CasinoState> = {
 
     // Refill / deal transitions once both hands are empty.
     if (hands[0].length === 0 && hands[1].length === 0) {
-      if (deck.length >= 2) {
+      if (deck.length >= 8) {
         hands[0] = deck.slice(0, 4);
         hands[1] = deck.slice(4, 8);
         deck = deck.slice(8);
