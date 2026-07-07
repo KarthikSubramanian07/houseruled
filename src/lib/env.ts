@@ -9,8 +9,11 @@
 export const HAS_REMOTE_BACKEND = process.env.NODE_ENV === "production";
 
 // ── Canonical site origin (SEO: canonical URLs, sitemap, OG tags) ─────────────
+// Use `||` (not `??`): an unset GitHub Actions `vars.*` arrives as an EMPTY STRING,
+// not undefined, and `new URL("")` throws at build time. Trim + `||` falls back
+// cleanly so the build is green whether or not the repo variable is configured.
 export const SITE_URL = (
-  process.env.NEXT_PUBLIC_SITE_URL ?? "https://houseruled.karthik-e5e.workers.dev"
+  process.env.NEXT_PUBLIC_SITE_URL?.trim() || "https://houseruled.karthik-e5e.workers.dev"
 ).replace(/\/$/, "");
 
 // ── Support the project ───────────────────────────────────────────────────────
