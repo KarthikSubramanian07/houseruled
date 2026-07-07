@@ -19,6 +19,10 @@ interface LibGame {
   creatorName: string | null;
 }
 
+// Invented games can only be built on these five bases (see lib/ai/gamegen.ts),
+// so the filter offers only these — the other games would be dead options.
+const INVENTABLE_BASES = new Set(["war", "gofish", "oldmaid", "crazyeights", "blackjack"]);
+
 export default function GamesPage() {
   const [games, setGames] = useState<LibGame[] | null>(null);
   const [favs, setFavs] = useState<Set<string>>(new Set());
@@ -61,15 +65,17 @@ export default function GamesPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search games…"
+            aria-label="Search the community library"
             className="felt-panel min-w-0 flex-1 rounded-full px-4 py-2 text-sm text-cream placeholder:text-cream/30"
           />
           <select
             value={base}
             onChange={(e) => setBase(e.target.value)}
+            aria-label="Filter by base game"
             className="felt-panel rounded-full px-3 py-2 text-sm text-cream"
           >
             <option value="">All base games</option>
-            {GAME_CATALOG.map((g) => (
+            {GAME_CATALOG.filter((g) => INVENTABLE_BASES.has(g.type)).map((g) => (
               <option key={g.type} value={g.type}>{g.name}</option>
             ))}
           </select>
@@ -78,6 +84,7 @@ export default function GamesPage() {
               <button
                 key={s}
                 onClick={() => setSort(s)}
+                aria-pressed={sort === s}
                 className={`px-4 py-2 transition-colors ${sort === s ? "bg-brass/20 text-brass" : "text-cream/50 hover:text-cream"}`}
               >
                 {s === "plays" ? "Top" : "New"}

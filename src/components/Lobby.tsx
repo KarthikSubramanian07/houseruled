@@ -36,7 +36,7 @@ function CopyButton({ value, label }: { value: string; label: string }) {
 
 const STATUS_STYLES: Record<ChannelStatus, { dot: string; text: string }> = {
   connecting: { dot: "bg-brass animate-pulse", text: "Connecting…" },
-  connected: { dot: "bg-emerald-400", text: "Live" },
+  connected: { dot: "bg-brass-bright", text: "Live" },
   demo: { dot: "bg-cream/40", text: "Table demo" },
   error: { dot: "bg-ember", text: "Reconnecting…" },
 };
