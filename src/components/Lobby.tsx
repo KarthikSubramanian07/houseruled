@@ -9,6 +9,7 @@ import { HouseRulesPlaque } from "./HouseRulesPlaque";
 import { GameSetup } from "./game/GameSetup";
 import { GameTable } from "./game/GameTable";
 import { ChatPanel } from "./game/ChatPanel";
+import { NameEditor } from "./NameEditor";
 import { getPlayer } from "@/lib/identity";
 import { getRoomByCode } from "@/lib/room";
 import { joinRoomChannel, type ChannelStatus, type ChatMessage, type RoomChannel } from "@/lib/realtime";
@@ -162,11 +163,14 @@ export function Lobby({ code }: { code: string }) {
 
   return (
     <>
-      <header className="flex items-center justify-between px-6 py-5 sm:px-10">
+      <header className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-6 py-5 sm:px-10">
         <Wordmark size="sm" />
-        <Link href="/" className="text-sm text-cream/55 no-underline transition-colors hover:text-cream">
-          Leave table
-        </Link>
+        <div className="flex items-center gap-4">
+          <NameEditor onChange={(n) => channelRef.current?.setName(n)} />
+          <Link href="/" className="text-sm text-cream/55 no-underline transition-colors hover:text-cream">
+            Leave table
+          </Link>
+        </div>
       </header>
 
       {errorMsg && (
