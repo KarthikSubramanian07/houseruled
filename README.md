@@ -31,11 +31,11 @@ Houseruled is built in deliberate phases — each one playable before the next b
 | 4 | Whole games invented from a sentence | ✅ |
 | 5 | Community library, sharing, spectators, chat | ✅ |
 
-**Today you can:** spin up a table, share the code, and **play** — **10 games** so
-far — live over WebSockets. Toggle curated **house rules**, or just *type your own
-in plain English* and the AI turns it into a real rule. You can even **describe a
-whole game in a sentence** and play what it invents — then save it to the community
-library.
+**Today you can:** spin up a table, share the code, and **play** — **16 games** so
+far — live over WebSockets. Every game ships a one-tap **How to play** guide.
+Toggle curated **house rules**, or just *type your own in plain English* and the AI
+turns it into a real rule. You can even **describe a whole game in a sentence** and
+play what it invents — then save it to the community library.
 
 ### The games
 
@@ -43,10 +43,13 @@ Every game runs **server-authoritatively inside the room's Durable Object** — 
 owns the deck, validates every move, and sends each player only their own hand.
 
 - **Shedding / matching:** War, Go Fish, Old Maid, Crazy Eights, Blackjack, Cheat (Bluff)
-- **Trick-taking** (shared trick core — follow-suit, trump, bidding): Hearts, Spades, Euchre (partnerships + bowers), Oh Hell (exact bids)
+- **Trick-taking** (shared trick core — follow-suit, trump, bidding): Hearts, Spades, Euchre (partnerships + bowers), Oh Hell (exact bids), Pitch (bid + set trump), 500 (partnership bidding, bowers + Joker, kitty)
+- **Capture / fishing:** Scopa (sum-to-capture, sweeps), Casino (pair or sum, race to 21)
+- **Rummy & pegging:** Gin Rummy (melds + knock), Cribbage (crib, the play, the show, to 121)
 
-The engine is pure, shared TypeScript with a big test suite (80+ tests —
-randomized playthroughs that conserve every card and always terminate).
+The engine is pure, shared TypeScript with a big test suite (110+ tests —
+randomized playthroughs that conserve every card and always terminate, plus
+scoring checks like Cribbage's famous 29 hand and 500's bower ordering).
 
 ### House rules (Phase 2)
 
@@ -74,9 +77,9 @@ Save it to the **community library** and share a `/game/<slug>` link.
 
 A D1-backed community library (browse, most-played), shareable game links,
 live **table chat**, spectators (late joiners watch), and reconnect-safe rooms
-(state lives in the Durable Object). Optional accounts and more games (Gin Rummy,
-Cribbage, Scopa, real-time Speed/Egyptian Ratscrew, solo Solitaire, …) are the
-next things on deck.
+(state lives in the Durable Object). Optional accounts and still more games
+(real-time Speed/Egyptian Ratscrew, solo Solitaire, Pinochle, …) are the next
+things on deck.
 
 ## The free-forever table — all Cloudflare
 

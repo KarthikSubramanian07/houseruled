@@ -4,9 +4,11 @@ import { HomeActions } from "@/components/HomeActions";
 import { SiteFooter } from "@/components/SiteFooter";
 import { AdSlot } from "@/components/AdSense";
 import { HAS_REMOTE_BACKEND } from "@/lib/env";
+import { GAME_CATALOG } from "@/lib/engine/registry";
 
 export default function Home() {
   const live = HAS_REMOTE_BACKEND;
+  const gameCount = GAME_CATALOG.length;
 
   return (
     <>
@@ -45,6 +47,14 @@ export default function Home() {
               Browse the community library
             </Link>
           </div>
+
+          <p className="mt-2 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs text-cream/45">
+            <span><span className="text-brass">{gameCount}</span> games ready to deal</span>
+            <span aria-hidden className="text-cream/20">·</span>
+            <span>house rules in plain English</span>
+            <span aria-hidden className="text-cream/20">·</span>
+            <span>no sign-up, just a link</span>
+          </p>
 
           {!live && (
             <p className="mt-2 w-full max-w-md text-xs leading-relaxed text-cream/40">

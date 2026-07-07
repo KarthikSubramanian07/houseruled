@@ -9,6 +9,14 @@ export type Rank = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13;
 export interface Card {
   s: Suit;
   r: Rank;
+  /** The Joker (used only by games with a 43-card deck, e.g. 500). Other fields are placeholders. */
+  j?: boolean;
+}
+
+/** The single Joker. `s`/`r` are placeholders; identify it with `isJoker`. */
+export const JOKER: Card = { s: "S", r: 1, j: true };
+export function isJoker(c: Card): boolean {
+  return c.j === true;
 }
 
 export const SUITS: readonly Suit[] = ["S", "H", "D", "C"];
@@ -36,7 +44,7 @@ export function cardId(c: Card): string {
 }
 
 export function cardLabel(c: Card): string {
-  return `${RANK_LABEL[c.r]}${SUIT_SYMBOL[c.s]}`;
+  return c.j ? "Joker" : `${RANK_LABEL[c.r]}${SUIT_SYMBOL[c.s]}`;
 }
 
 /** A fresh, ordered 52-card deck. */

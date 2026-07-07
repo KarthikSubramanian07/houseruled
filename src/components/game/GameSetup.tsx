@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "../Button";
+import { HowToPlay } from "./HowToPlay";
 import { GAME_CATALOG, supportsAIRules } from "@/lib/engine/registry";
 import { rulesFor, detectConflicts } from "@/lib/engine/houserules";
 import { summarizeRule, type AIRule } from "@/lib/engine/airules";
@@ -130,6 +131,14 @@ export function GameSetup({
           );
         })}
       </div>
+
+      {/* How to play the selected game */}
+      {meta && (
+        <div className="-mt-2 flex items-center justify-center gap-2 text-sm text-cream/55">
+          <span>New to {meta.name}?</span>
+          <HowToPlay type={meta.type} name={meta.name} className="!text-brass hover:!text-brass-bright" />
+        </div>
+      )}
 
       {/* House rules */}
       {game && gameRules.length > 0 && (

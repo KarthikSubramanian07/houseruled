@@ -87,7 +87,7 @@ export default function GamesPage() {
         </div>
 
         {games === null ? (
-          <p className="text-center text-cream/50">Loading…</p>
+          <p className="text-center text-cream/50">Shuffling the deck…</p>
         ) : games.length === 0 ? (
           <div className="flex flex-col items-center gap-4 py-10 text-center">
             <p className="text-cream/60">{search || base ? "Nothing matches — try a different search." : "No games yet — be the first to invent one."}</p>

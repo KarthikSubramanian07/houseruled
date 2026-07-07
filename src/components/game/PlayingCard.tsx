@@ -52,6 +52,21 @@ export function PlayingCard({
     );
   }
 
+  if (card.j) {
+    return (
+      <div
+        onClick={onClick}
+        style={style}
+        role={onClick ? "button" : undefined}
+        className={`deal-in flex flex-col items-center justify-center gap-1 bg-cream p-1.5 shadow-lg transition-transform ${base} ${interactive} ${lift} ${dim} ${ring} ${highlight ? "card-playable" : ""}`}
+        aria-label="Joker"
+      >
+        <span className="font-display text-xl leading-none text-brass">★</span>
+        <span className="font-display text-[0.6em] uppercase tracking-widest text-ink/70">Joker</span>
+      </div>
+    );
+  }
+
   const color = isRed(card.s) ? "text-ember" : "text-ink";
   return (
     <div
