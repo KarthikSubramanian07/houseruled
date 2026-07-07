@@ -8,7 +8,7 @@ import { getRule } from "@/lib/engine/houserules";
 import { validCapture } from "@/lib/engine/games/casino";
 import type { Action, GameView, PlayerPublic } from "@/lib/engine/types";
 
-const key = (c: Card) => `${c.r}${c.s}`;
+const key = (c: Card) => (c.j ? "JK" : `${c.r}${c.s}`);
 function initials(name: string): string {
   return name.trim().split(/\s+/).slice(0, 2).map((p) => p[0]?.toUpperCase() ?? "").join("") || "?";
 }
@@ -64,6 +64,8 @@ export function GameTable({
           <CasinoControls view={view} onAction={onAction} />
         ) : view.type === "cribbage" ? (
           <CribbageControls view={view} onAction={onAction} />
+        ) : view.type === "fivehundred" ? (
+          <FiveHundredControls view={view} onAction={onAction} />
         ) : (
           <>
             {me && <ActionBar view={view} onAction={onAction} />}
@@ -206,6 +208,12 @@ function OpponentBadge({ p, type }: { p: PlayerPublic; type: string }) {
       {type === "cribbage" && (
         <span className="tabular text-xs text-brass/80">
           {String(p.extra?.score ?? 0)} / 121{p.extra?.isDealer ? " · deals" : ""}
+        </span>
+      )}
+      {type === "fivehundred" && (
+        <span className="tabular text-xs text-brass/80">
+          Team {p.extra?.team === 0 ? "A" : "B"}{p.extra?.isDeclarer ? " · bidder" : ""}
+          {p.extra?.passed ? " · passed" : ""}
         </span>
       )}
     </div>
@@ -502,6 +510,52 @@ function Center({ view, onAction }: { view: GameView; onAction: (a: Action) => v
           {(c.deckCount as number) > 0 ? <PlayingCard faceDown size="lg" /> : <div className="h-28 w-20 rounded-lg border border-dashed border-cream/20" />}
           <span className="tabular text-xs text-cream/50">Deal {String(c.deal)} · {String(c.deckCount)} in the deck</span>
           <span className="tabular text-xs text-brass">Race to 21 · {tot[0]} – {tot[1]}</span>
+        </div>
+      );
+    }
+    case "fivehundred": {
+      const trick = (c.trick as { card: Card; name: string }[]) ?? [];
+      const contract = c.contract as { tricks: number; label: string } | null;
+      const highBid = c.highBid as { tricks: number; label: string; name: string; value: number } | null;
+      const tw = (c.tricksWon as [number, number]) ?? [0, 0];
+      const ts = (c.teamScores as [number, number]) ?? [0, 0];
+      const myTurn = view.turn === view.you;
+      if (c.phase === "bidding") {
+        return (
+          <div className="flex flex-col items-center gap-2 py-3">
+            <span className="font-display text-xl text-cream/80">Bidding</span>
+            <span className="text-xs text-cream/55">
+              {highBid ? `${highBid.name} holds ${highBid.tricks} ${highBid.label} (${highBid.value})` : "No bids yet — open the auction."}
+            </span>
+            <span className="tabular text-[11px] text-brass/70">Team A {ts[0]} · Team B {ts[1]}</span>
+          </div>
+        );
+      }
+      if (c.phase === "kitty") {
+        return (
+          <div className="flex flex-col items-center gap-2 py-4">
+            <span className="font-display text-xl text-cream/80">{contract?.tricks} {contract?.label}</span>
+            <span className="text-xs text-cream/55">{c.kittyPickup ? "Take the kitty — discard 3." : `${String(c.declarerName)} is exchanging the kitty…`}</span>
+          </div>
+        );
+      }
+      return (
+        <div className="flex flex-col items-center gap-3">
+          <div className="flex min-h-24 items-center justify-center gap-3">
+            {trick.length === 0 ? (
+              <span className="text-sm text-cream/45">{myTurn ? "Lead a card." : "Waiting…"}</span>
+            ) : (
+              trick.map((p, i) => (
+                <div key={i} className="deal-in flex flex-col items-center gap-1">
+                  <PlayingCard card={p.card} size="md" />
+                  <span className="max-w-16 truncate text-xs text-cream/55">{p.name}</span>
+                </div>
+              ))
+            )}
+          </div>
+          <span className="text-xs text-cream/45">
+            {contract?.tricks} {contract?.label} · Trick {(c.trickCount as number) + 1} / 10 · A {tw[0]} – B {tw[1]}
+          </span>
         </div>
       );
     }
@@ -1027,6 +1081,112 @@ function CribbageControls({ view, onAction }: { view: GameView; onAction: (a: Ac
       </div>
       {view.hand.length === 0 && <p className="text-xs text-cream/45">Hand played out — counting the show…</p>}
       {view.hand.length > 0 && !myTurn && <p className="text-xs text-cream/45">Waiting…</p>}
+    </div>
+  );
+}
+
+// ── 500 controls: bid grid, kitty discard, then trick play ────────────────────
+function FiveHundredControls({ view, onAction }: { view: GameView; onAction: (a: Action) => void }) {
+  const phase = view.center.phase as string;
+  const myTurn = view.turn === view.you;
+
+  const playMap = new Map(
+    phase === "playing" ? view.legal.filter((a) => a.type === "play" && a.card).map((a) => [key(a.card as Card), a] as const) : [],
+  );
+
+  if (phase === "bidding") {
+    const bids = view.legal.filter((a) => a.type === "bid");
+    const canPass = view.legal.some((a) => a.type === "pass");
+    const SUIT_COLS: { s: string; label: string }[] = [
+      { s: "S", label: "♠" }, { s: "C", label: "♣" }, { s: "D", label: "♦" }, { s: "H", label: "♥" }, { s: "NT", label: "NT" },
+    ];
+    return (
+      <div className="flex flex-col items-center gap-3">
+        {myTurn ? (
+          <>
+            <div className="flex flex-col gap-1">
+              {[6, 7, 8, 9, 10].map((t) => {
+                const row = bids.filter((b) => b.tricks === t);
+                if (row.length === 0) return null;
+                return (
+                  <div key={t} className="flex items-center gap-1.5">
+                    <span className="tabular w-4 text-right text-xs text-cream/50">{t}</span>
+                    {SUIT_COLS.map((col) => {
+                      const b = row.find((x) => x.suit === col.s);
+                      const red = col.s === "H" || col.s === "D";
+                      return b ? (
+                        <button
+                          key={col.s}
+                          onClick={() => onAction({ type: "bid", tricks: t, suit: col.s })}
+                          className={`grid h-8 min-w-8 place-items-center rounded-lg bg-cream px-1.5 text-sm ${red ? "text-ember" : "text-ink"} transition-transform hover:-translate-y-0.5 hover:ring-2 hover:ring-brass`}
+                        >
+                          {col.label}
+                        </button>
+                      ) : (
+                        <span key={col.s} className="grid h-8 min-w-8 place-items-center px-1.5 text-sm text-cream/15">{col.label}</span>
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </div>
+            {canPass && <Button variant="quiet" size="md" onClick={() => onAction({ type: "pass" })}>Pass</Button>}
+          </>
+        ) : (
+          <p className="text-xs text-cream/45">Waiting for the auction…</p>
+        )}
+        <div className="flex flex-wrap items-end justify-center gap-1.5 opacity-90">
+          {view.hand.map((card, i) => (
+            <PlayingCard key={`${key(card)}-${i}`} card={card} size="sm" delay={Math.min(i, 10) * 25} />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (phase === "kitty") {
+    const mine = view.center.kittyPickup as boolean;
+    const toGo = view.hand.length - 10;
+    return (
+      <div className="flex flex-col items-center gap-3">
+        {mine ? (
+          <span className="text-xs text-cream/60">Tap {toGo} card{toGo === 1 ? "" : "s"} to discard to the kitty.</span>
+        ) : (
+          <span className="text-xs text-cream/45">The bidder is exchanging the kitty…</span>
+        )}
+        <div className="flex flex-wrap items-end justify-center gap-1.5">
+          {view.hand.map((card, i) => (
+            <PlayingCard
+              key={`${key(card)}-${i}`}
+              card={card}
+              size="md"
+              delay={Math.min(i, 12) * 25}
+              onClick={mine ? () => onAction({ type: "kitty", card }) : undefined}
+              highlight={mine}
+            />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Play phase.
+  return (
+    <div className="flex flex-wrap items-end justify-center gap-1.5">
+      {view.hand.map((card, i) => {
+        const canPlay = playMap.has(key(card));
+        return (
+          <PlayingCard
+            key={`${key(card)}-${i}`}
+            card={card}
+            size="md"
+            delay={Math.min(i, 10) * 30}
+            onClick={myTurn && canPlay ? () => onAction(playMap.get(key(card)) as Action) : undefined}
+            highlight={myTurn && canPlay}
+            dimmed={myTurn && !canPlay}
+          />
+        );
+      })}
     </div>
   );
 }
