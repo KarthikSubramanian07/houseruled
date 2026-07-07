@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { getPlayer } from "@/lib/identity";
+import { getPlayer, getPlayerSecret } from "@/lib/identity";
 
 /** Heart toggle for a custom game. Optimistic; persists to the player's favorites. */
 export function FavoriteButton({ slug, initial = false, size = "md" }: { slug: string; initial?: boolean; size?: "sm" | "md" }) {
@@ -19,7 +19,7 @@ export function FavoriteButton({ slug, initial = false, size = "md" }: { slug: s
       const res = await fetch(`/api/games/${slug}/favorite`, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ userId: getPlayer().id }),
+        body: JSON.stringify({ userId: getPlayer().id, secret: getPlayerSecret() }),
       });
       const data = (await res.json()) as { ok: boolean; favorited?: boolean };
       if (data.ok && typeof data.favorited === "boolean") setFav(data.favorited);
