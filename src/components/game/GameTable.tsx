@@ -1201,6 +1201,9 @@ function FiveHundredControls({ view, onAction }: { view: GameView; onAction: (a:
 }
 
 // ── End overlay ───────────────────────────────────────────────────────────────
+const WIN_LINES = ["The table salutes you.", "Textbook. Deal again?", "That's how it's done.", "House money."];
+const LOSE_LINES = ["Shuffle up — you'll get them next hand.", "So close. Run it back?", "The cards giveth, and they taketh.", "Every dealer has an off night."];
+
 function EndOverlay({
   message,
   won,
@@ -1214,11 +1217,16 @@ function EndOverlay({
   onRematch: () => void;
   onBackToLobby: () => void;
 }) {
+  const [flavor] = useState(() => {
+    const lines = won ? WIN_LINES : LOSE_LINES;
+    return lines[Math.floor(Math.random() * lines.length)];
+  });
   return (
     <div className="fixed inset-0 z-30 grid place-items-center bg-felt-deep/80 px-6 backdrop-blur-sm">
       <div className="deal-in flex max-w-sm flex-col items-center gap-4 rounded-2xl border border-brass/40 bg-felt-dark p-8 text-center shadow-2xl">
         <p className="font-display text-2xl text-brass">{won ? "🏆" : ""}</p>
         <p className="font-display text-3xl leading-tight text-cream">{message}</p>
+        <p className="-mt-1 text-sm italic text-cream/55">{flavor}</p>
         {isHost ? (
           <div className="mt-2 flex flex-col gap-2">
             <Button size="lg" onClick={onRematch}>Rematch</Button>
