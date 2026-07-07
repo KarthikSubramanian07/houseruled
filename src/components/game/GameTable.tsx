@@ -170,7 +170,7 @@ function OpponentBadge({ p, type }: { p: PlayerPublic; type: string }) {
       {type === "hearts" && p.extra?.points != null && (
         <span className="tabular text-xs text-brass">{String(p.extra.points)} pts</span>
       )}
-      {type === "spades" && (
+      {(type === "spades" || type === "ohhell") && (
         <span className="tabular text-xs text-brass">
           {p.extra?.bid == null ? "bidding…" : `bid ${String(p.extra.bid)} · won ${String(p.extra.won ?? 0)}`}
         </span>
@@ -310,6 +310,39 @@ function Center({ view, onAction }: { view: GameView; onAction: (a: Action) => v
         </div>
       );
     }
+    case "ohhell": {
+      const trick = (c.trick as { card: Card; name: string }[]) ?? [];
+      const trump = c.trump as Suit;
+      const myTurn = view.turn === view.you;
+      if (c.phase === "bidding") {
+        return (
+          <div className="flex flex-col items-center gap-2">
+            <span className="text-xs uppercase tracking-widest text-cream/45">Trump</span>
+            <PlayingCard card={c.turned as Card} size="lg" />
+            <span className="text-xs text-cream/50">{myTurn ? "Bid the exact tricks you'll take." : "Waiting for bids…"}</span>
+          </div>
+        );
+      }
+      return (
+        <div className="flex flex-col items-center gap-3">
+          <div className="flex min-h-24 items-center justify-center gap-3">
+            {trick.length === 0 ? (
+              <span className="text-sm text-cream/45">{myTurn ? "Lead a card." : "Waiting…"}</span>
+            ) : (
+              trick.map((p, i) => (
+                <div key={i} className="deal-in flex flex-col items-center gap-1">
+                  <PlayingCard card={p.card} size="md" />
+                  <span className="max-w-16 truncate text-xs text-cream/55">{p.name}</span>
+                </div>
+              ))
+            )}
+          </div>
+          <span className="text-xs text-cream/45">
+            Trump {SUIT_SYMBOL[trump]} · Trick {(c.trickCount as number) + 1} / {String(c.handSize)}
+          </span>
+        </div>
+      );
+    }
     case "cheat": {
       const claim = c.claim as { name: string; rank: string; count: number } | null;
       const pileCount = c.pileCount as number;
@@ -372,7 +405,7 @@ function Center({ view, onAction }: { view: GameView; onAction: (a: Action) => v
 }
 
 // ── Your hand ─────────────────────────────────────────────────────────────────
-const CARD_PLAY = new Set(["crazyeights", "hearts", "spades", "euchre"]);
+const CARD_PLAY = new Set(["crazyeights", "hearts", "spades", "euchre", "ohhell"]);
 
 function Hand({ view, onAction }: { view: GameView; onAction: (a: Action) => void }) {
   const [wild, setWild] = useState<Card | null>(null);
@@ -504,6 +537,23 @@ function ActionBar({ view, onAction }: { view: GameView; onAction: (a: Action) =
             className="tabular grid h-9 w-9 place-items-center rounded-lg bg-cream text-sm text-ink transition-transform hover:-translate-y-0.5 hover:ring-2 hover:ring-brass"
           >
             {n === 0 ? "Nil" : n}
+          </button>
+        ))}
+      </div>
+    );
+  }
+  if (view.type === "ohhell" && has("bid")) {
+    const bids = legal.filter((a) => a.type === "bid").map((a) => a.n as number);
+    return (
+      <div className="flex max-w-md flex-wrap items-center justify-center gap-1.5">
+        <span className="mr-1 text-xs text-cream/60">Bid exactly:</span>
+        {bids.map((n) => (
+          <button
+            key={n}
+            onClick={() => onAction({ type: "bid", n })}
+            className="tabular grid h-9 w-9 place-items-center rounded-lg bg-cream text-sm text-ink transition-transform hover:-translate-y-0.5 hover:ring-2 hover:ring-brass"
+          >
+            {n}
           </button>
         ))}
       </div>
