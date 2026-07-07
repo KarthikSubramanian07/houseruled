@@ -55,8 +55,14 @@ export function GameTable({
 
       {/* Your hand + actions */}
       <div className="flex flex-col items-center gap-4">
-        {me && <ActionBar view={view} onAction={onAction} />}
-        {view.hand.length > 0 && <Hand view={view} onAction={onAction} />}
+        {view.type === "cheat" ? (
+          <CheatControls view={view} onAction={onAction} />
+        ) : (
+          <>
+            {me && <ActionBar view={view} onAction={onAction} />}
+            {view.hand.length > 0 && <Hand view={view} onAction={onAction} />}
+          </>
+        )}
         <p className="text-xs text-cream/45">
           {myTurn ? "Your move." : view.turn ? `Waiting on ${view.players.find((p) => p.id === view.turn)?.name ?? "…"}.` : ""}
         </p>
@@ -304,6 +310,24 @@ function Center({ view, onAction }: { view: GameView; onAction: (a: Action) => v
         </div>
       );
     }
+    case "cheat": {
+      const claim = c.claim as { name: string; rank: string; count: number } | null;
+      const pileCount = c.pileCount as number;
+      return (
+        <div className="flex flex-col items-center gap-2">
+          {pileCount > 0 ? <PlayingCard faceDown size="lg" /> : <div className="h-28 w-20 rounded-lg border border-dashed border-cream/20" />}
+          <span className="tabular text-xs text-cream/50">{pileCount} in the pile</span>
+          {claim ? (
+            <span className="text-sm text-cream/80">
+              {claim.name} claims <span className="text-brass">{claim.count} × {claim.rank}</span>
+            </span>
+          ) : (
+            <span className="text-xs text-cream/45">No claim yet.</span>
+          )}
+          <span className="text-xs text-cream/45">You must claim: <span className="text-brass">{String(c.requiredRank)}s</span></span>
+        </div>
+      );
+    }
     case "euchre": {
       const trick = (c.trick as { card: Card; name: string }[]) ?? [];
       const trump = c.trump as Suit | null;
@@ -527,6 +551,58 @@ function GoFishAsk({ view, onAction }: { view: GameView; onAction: (a: Action) =
       >
         {rank != null ? `Ask for ${RANK_LABEL[rank]}s` : "Choose a rank"}
       </Button>
+    </div>
+  );
+}
+
+// ── Cheat (Bluff) controls: multi-select + play/call ─────────────────────────
+function CheatControls({ view, onAction }: { view: GameView; onAction: (a: Action) => void }) {
+  const [sel, setSel] = useState<string[]>([]);
+  const myTurn = view.turn === view.you;
+  const canPlay = view.legal.some((a) => a.type === "play");
+  const canCall = view.legal.some((a) => a.type === "call");
+  const required = view.center.requiredRank as string;
+
+  function toggle(card: Card) {
+    if (!myTurn || !canPlay) return;
+    const k = key(card);
+    setSel((prev) => (prev.includes(k) ? prev.filter((x) => x !== k) : prev.length < 4 ? [...prev, k] : prev));
+  }
+  function play() {
+    const cards = view.hand.filter((c) => sel.includes(key(c)));
+    if (cards.length < 1) return;
+    onAction({ type: "play", cards });
+    setSel([]);
+  }
+
+  return (
+    <div className="flex flex-col items-center gap-3">
+      <div className="flex flex-wrap items-end justify-center gap-1.5">
+        {view.hand.map((card, i) => (
+          <PlayingCard
+            key={`${key(card)}-${i}`}
+            card={card}
+            size="md"
+            delay={Math.min(i, 8) * 30}
+            onClick={myTurn && canPlay ? () => toggle(card) : undefined}
+            selected={sel.includes(key(card))}
+          />
+        ))}
+      </div>
+      {myTurn ? (
+        <div className="flex gap-3">
+          <Button size="md" disabled={!canPlay || sel.length < 1} onClick={play}>
+            Play {sel.length || ""} as {required}s
+          </Button>
+          {canCall && (
+            <Button variant="quiet" size="md" onClick={() => onAction({ type: "call" })}>
+              Call bluff
+            </Button>
+          )}
+        </div>
+      ) : (
+        <p className="text-xs text-cream/45">Waiting…</p>
+      )}
     </div>
   );
 }
