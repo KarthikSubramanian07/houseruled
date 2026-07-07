@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { PlayingCard } from "./PlayingCard";
 import { Button } from "../Button";
 import { SUITS, SUIT_SYMBOL, RANK_LABEL, isRed, type Card, type Suit, type Rank } from "@/lib/engine/cards";
@@ -236,9 +236,32 @@ function OpponentBadge({ p, type }: { p: PlayerPublic; type: string }) {
   );
 }
 
+// The shared trick pile: the cards played this trick (with names) and a footer
+// line. Used identically by every trick-taking game's center.
+function TrickFan({ trick, emptyLabel, footer }: { trick: { card: Card; name: string }[]; emptyLabel: string; footer: ReactNode }) {
+  return (
+    <div className="flex flex-col items-center gap-3">
+      <div className="flex min-h-24 flex-wrap items-center justify-center gap-3">
+        {trick.length === 0 ? (
+          <span className="text-sm text-cream/45">{emptyLabel}</span>
+        ) : (
+          trick.map((p, i) => (
+            <div key={i} className="deal-in flex flex-col items-center gap-1">
+              <PlayingCard card={p.card} size="md" />
+              <span className="max-w-16 truncate text-xs text-cream/55">{p.name}</span>
+            </div>
+          ))
+        )}
+      </div>
+      <span className="text-xs text-cream/45">{footer}</span>
+    </div>
+  );
+}
+
 // ── Center dispatch ───────────────────────────────────────────────────────────
 function Center({ view, onAction }: { view: GameView; onAction: (a: Action) => void }) {
   const c = view.center;
+  const myTurn = view.turn === view.you;
   switch (view.type) {
     case "war": {
       const battle = c.battle as { a: Card; b: Card; war: boolean } | null;
@@ -331,7 +354,6 @@ function Center({ view, onAction }: { view: GameView; onAction: (a: Action) => v
       const trump = view.type === "spades";
       const broken = trump ? (c.spadesBroken as boolean) : (c.heartsBroken as boolean);
       const bidding = trump && c.phase === "bidding";
-      const myTurn = view.turn === view.you;
       if (bidding) {
         return (
           <div className="flex flex-col items-center gap-2 py-4">
@@ -341,31 +363,20 @@ function Center({ view, onAction }: { view: GameView; onAction: (a: Action) => v
         );
       }
       return (
-        <div className="flex flex-col items-center gap-3">
-          <div className="flex min-h-24 flex-wrap items-center justify-center gap-3">
-            {trick.length === 0 ? (
-              <span className="text-sm text-cream/45">{myTurn ? "Lead a card." : "Waiting…"}</span>
-            ) : (
-              trick.map((p, i) => (
-                <div key={i} className="deal-in flex flex-col items-center gap-1">
-                  <PlayingCard card={p.card} size="md" />
-                  <span className="max-w-16 truncate text-xs text-cream/55">{p.name}</span>
-                </div>
-              ))
-            )}
-          </div>
-          <span className="text-xs text-cream/45">
+        <TrickFan
+          trick={trick}
+          emptyLabel={myTurn ? "Lead a card." : "Waiting…"}
+          footer={<>
             Trick {(c.trickCount as number) + 1} / 13
             {trump ? " · ♠ trump" : ""}
             {broken ? "" : trump ? " · spades unbroken" : " · hearts unbroken"}
-          </span>
-        </div>
+          </>}
+        />
       );
     }
     case "ohhell": {
       const trick = (c.trick as { card: Card; name: string }[]) ?? [];
       const trump = c.trump as Suit;
-      const myTurn = view.turn === view.you;
       if (c.phase === "bidding") {
         return (
           <div className="flex flex-col items-center gap-2">
@@ -376,23 +387,11 @@ function Center({ view, onAction }: { view: GameView; onAction: (a: Action) => v
         );
       }
       return (
-        <div className="flex flex-col items-center gap-3">
-          <div className="flex min-h-24 flex-wrap items-center justify-center gap-3">
-            {trick.length === 0 ? (
-              <span className="text-sm text-cream/45">{myTurn ? "Lead a card." : "Waiting…"}</span>
-            ) : (
-              trick.map((p, i) => (
-                <div key={i} className="deal-in flex flex-col items-center gap-1">
-                  <PlayingCard card={p.card} size="md" />
-                  <span className="max-w-16 truncate text-xs text-cream/55">{p.name}</span>
-                </div>
-              ))
-            )}
-          </div>
-          <span className="text-xs text-cream/45">
-            Trump {SUIT_SYMBOL[trump]} · Trick {(c.trickCount as number) + 1} / {String(c.handSize)}
-          </span>
-        </div>
+        <TrickFan
+          trick={trick}
+          emptyLabel={myTurn ? "Lead a card." : "Waiting…"}
+          footer={<>Trump {SUIT_SYMBOL[trump]} · Trick {(c.trickCount as number) + 1} / {String(c.handSize)}</>}
+        />
       );
     }
     case "scopa": {
@@ -449,7 +448,6 @@ function Center({ view, onAction }: { view: GameView; onAction: (a: Action) => v
       const trump = c.trump as Suit | null;
       const phase = c.phase as string;
       const tw = (c.tricksWon as [number, number]) ?? [0, 0];
-      const myTurn = view.turn === view.you;
       if (phase === "bid1" || phase === "bid2") {
         return (
           <div className="flex flex-col items-center gap-2">
@@ -463,29 +461,16 @@ function Center({ view, onAction }: { view: GameView; onAction: (a: Action) => v
       }
       if (phase === "discard") return <p className="text-center text-sm text-cream/50">{String(c.dealerName)} is discarding…</p>;
       return (
-        <div className="flex flex-col items-center gap-3">
-          <div className="flex min-h-24 flex-wrap items-center justify-center gap-3">
-            {trick.length === 0 ? (
-              <span className="text-sm text-cream/45">{myTurn ? "Lead a card." : "Waiting…"}</span>
-            ) : (
-              trick.map((p, i) => (
-                <div key={i} className="deal-in flex flex-col items-center gap-1">
-                  <PlayingCard card={p.card} size="md" />
-                  <span className="max-w-16 truncate text-xs text-cream/55">{p.name}</span>
-                </div>
-              ))
-            )}
-          </div>
-          <span className="text-xs text-cream/45">
-            Trump {trump ? SUIT_SYMBOL[trump] : "?"} · Trick {(c.trickCount as number) + 1} / 5 · A {tw[0]} – B {tw[1]}
-          </span>
-        </div>
+        <TrickFan
+          trick={trick}
+          emptyLabel={myTurn ? "Lead a card." : "Waiting…"}
+          footer={<>Trump {trump ? SUIT_SYMBOL[trump] : "?"} · Trick {(c.trickCount as number) + 1} / 5 · A {tw[0]} – B {tw[1]}</>}
+        />
       );
     }
     case "pitch": {
       const trick = (c.trick as { card: Card; name: string }[]) ?? [];
       const trump = c.trump as Suit | null;
-      const myTurn = view.turn === view.you;
       if (c.phase === "bidding") {
         return (
           <div className="flex flex-col items-center gap-2 py-4">
@@ -498,25 +483,11 @@ function Center({ view, onAction }: { view: GameView; onAction: (a: Action) => v
         );
       }
       return (
-        <div className="flex flex-col items-center gap-3">
-          <div className="flex min-h-24 flex-wrap items-center justify-center gap-3">
-            {trick.length === 0 ? (
-              <span className="text-sm text-cream/45">
-                {myTurn ? (trump ? "Lead a card." : "Lead — the suit you play sets trump.") : "Waiting…"}
-              </span>
-            ) : (
-              trick.map((p, i) => (
-                <div key={i} className="deal-in flex flex-col items-center gap-1">
-                  <PlayingCard card={p.card} size="md" />
-                  <span className="max-w-16 truncate text-xs text-cream/55">{p.name}</span>
-                </div>
-              ))
-            )}
-          </div>
-          <span className="text-xs text-cream/45">
-            {trump ? `Trump ${SUIT_SYMBOL[trump]}` : "Trump not set"} · {String(c.pitcherName)} pitched {String(c.highBid)} · Trick {(c.trickCount as number) + 1} / 6
-          </span>
-        </div>
+        <TrickFan
+          trick={trick}
+          emptyLabel={myTurn ? (trump ? "Lead a card." : "Lead — the suit you play sets trump.") : "Waiting…"}
+          footer={<>{trump ? `Trump ${SUIT_SYMBOL[trump]}` : "Trump not set"} · {String(c.pitcherName)} pitched {String(c.highBid)} · Trick {(c.trickCount as number) + 1} / 6</>}
+        />
       );
     }
     case "casino": {
@@ -535,7 +506,6 @@ function Center({ view, onAction }: { view: GameView; onAction: (a: Action) => v
       const highBid = c.highBid as { tricks: number; label: string; name: string; value: number } | null;
       const tw = (c.tricksWon as [number, number]) ?? [0, 0];
       const ts = (c.teamScores as [number, number]) ?? [0, 0];
-      const myTurn = view.turn === view.you;
       if (c.phase === "bidding") {
         return (
           <div className="flex flex-col items-center gap-2 py-3">
@@ -556,23 +526,11 @@ function Center({ view, onAction }: { view: GameView; onAction: (a: Action) => v
         );
       }
       return (
-        <div className="flex flex-col items-center gap-3">
-          <div className="flex min-h-24 flex-wrap items-center justify-center gap-3">
-            {trick.length === 0 ? (
-              <span className="text-sm text-cream/45">{myTurn ? "Lead a card." : "Waiting…"}</span>
-            ) : (
-              trick.map((p, i) => (
-                <div key={i} className="deal-in flex flex-col items-center gap-1">
-                  <PlayingCard card={p.card} size="md" />
-                  <span className="max-w-16 truncate text-xs text-cream/55">{p.name}</span>
-                </div>
-              ))
-            )}
-          </div>
-          <span className="text-xs text-cream/45">
-            {contract?.tricks} {contract?.label} · Trick {(c.trickCount as number) + 1} / 10 · A {tw[0]} – B {tw[1]}
-          </span>
-        </div>
+        <TrickFan
+          trick={trick}
+          emptyLabel={myTurn ? "Lead a card." : "Waiting…"}
+          footer={<>{contract?.tricks} {contract?.label} · Trick {(c.trickCount as number) + 1} / 10 · A {tw[0]} – B {tw[1]}</>}
+        />
       );
     }
     case "cribbage": {
