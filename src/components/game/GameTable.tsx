@@ -5,6 +5,7 @@ import { PlayingCard } from "./PlayingCard";
 import { Button } from "../Button";
 import { SUITS, SUIT_SYMBOL, RANK_LABEL, isRed, type Card, type Suit, type Rank } from "@/lib/engine/cards";
 import { getRule } from "@/lib/engine/houserules";
+import { validCapture } from "@/lib/engine/games/casino";
 import type { Action, GameView, PlayerPublic } from "@/lib/engine/types";
 
 const key = (c: Card) => `${c.r}${c.s}`;
@@ -59,6 +60,8 @@ export function GameTable({
           <CheatControls view={view} onAction={onAction} />
         ) : view.type === "gin" ? (
           <GinControls view={view} onAction={onAction} />
+        ) : view.type === "casino" ? (
+          <CasinoControls view={view} onAction={onAction} />
         ) : (
           <>
             {me && <ActionBar view={view} onAction={onAction} />}
@@ -191,6 +194,11 @@ function OpponentBadge({ p, type }: { p: PlayerPublic; type: string }) {
         <span className="tabular text-xs text-brass/80">
           {p.extra?.isPitcher ? `pitched ${String(p.extra?.bid ?? "")}` : "in the hand"}
           {p.extra?.score != null ? ` · ${Number(p.extra.score) >= 0 ? "+" : ""}${String(p.extra.score)}` : ""}
+        </span>
+      )}
+      {type === "casino" && (
+        <span className="tabular text-xs text-brass/80">
+          {String(p.extra?.total ?? 0)} pts · {String(p.extra?.captured ?? 0)} cards{Number(p.extra?.sweeps ?? 0) > 0 ? ` · ${p.extra?.sweeps} sweep` : ""}
         </span>
       )}
     </div>
@@ -477,6 +485,16 @@ function Center({ view, onAction }: { view: GameView; onAction: (a: Action) => v
           <span className="text-xs text-cream/45">
             {trump ? `Trump ${SUIT_SYMBOL[trump]}` : "Trump not set"} · {String(c.pitcherName)} pitched {String(c.highBid)} · Trick {(c.trickCount as number) + 1} / 6
           </span>
+        </div>
+      );
+    }
+    case "casino": {
+      const tot = (c.total as [number, number]) ?? [0, 0];
+      return (
+        <div className="flex flex-col items-center gap-2">
+          {(c.deckCount as number) > 0 ? <PlayingCard faceDown size="lg" /> : <div className="h-28 w-20 rounded-lg border border-dashed border-cream/20" />}
+          <span className="tabular text-xs text-cream/50">Deal {String(c.deal)} · {String(c.deckCount)} in the deck</span>
+          <span className="tabular text-xs text-brass">Race to 21 · {tot[0]} – {tot[1]}</span>
         </div>
       );
     }
@@ -814,6 +832,79 @@ function GinControls({ view, onAction }: { view: GameView; onAction: (a: Action)
           ) : null}
           {!selCard && <span className="text-xs text-cream/40">pick a card</span>}
         </div>
+      )}
+    </div>
+  );
+}
+
+// ── Casino controls: pick a card, tap table cards to capture, or trail ────────
+function CasinoControls({ view, onAction }: { view: GameView; onAction: (a: Action) => void }) {
+  const [handSel, setHandSel] = useState<string | null>(null);
+  const [tableSel, setTableSel] = useState<string[]>([]);
+  const myTurn = view.turn === view.you;
+  const table = (view.center.table as Card[]) ?? [];
+  const me = view.players.find((p) => p.id === view.you);
+  const myTotal = me?.extra?.total as number | undefined;
+
+  const handCard = view.hand.find((c) => key(c) === handSel) ?? null;
+  const targets = table.filter((c) => tableSel.includes(key(c)));
+  const canCapture = !!handCard && validCapture(targets, handCard);
+  const canTrail = !!handCard && tableSel.length === 0;
+
+  function reset() { setHandSel(null); setTableSel([]); }
+  function toggleTable(c: Card) {
+    if (!myTurn) return;
+    const k = key(c);
+    setTableSel((prev) => (prev.includes(k) ? prev.filter((x) => x !== k) : [...prev, k]));
+  }
+  function capture() { if (handCard && canCapture) { onAction({ type: "capture", card: handCard, targets }); reset(); } }
+  function trail() { if (handCard) { onAction({ type: "trail", card: handCard }); reset(); } }
+
+  return (
+    <div className="flex flex-col items-center gap-3">
+      {myTotal != null && <span className="text-xs text-cream/50">You: <span className="text-brass">{myTotal}</span> pts</span>}
+      <div className="flex flex-col items-center gap-1">
+        <span className="plaque-header text-[10px] text-brass/60">Table — tap cards to capture</span>
+        <div className="flex min-h-24 max-w-lg flex-wrap items-center justify-center gap-1.5">
+          {table.length === 0 ? (
+            <span className="text-sm text-cream/45">Table is clear.</span>
+          ) : (
+            table.map((c, i) => (
+              <PlayingCard
+                key={`${key(c)}-t${i}`}
+                card={c}
+                size="md"
+                onClick={myTurn ? () => toggleTable(c) : undefined}
+                selected={tableSel.includes(key(c))}
+              />
+            ))
+          )}
+        </div>
+      </div>
+      <div className="h-px w-24 bg-brass/15" />
+      <div className="flex flex-wrap items-end justify-center gap-1.5">
+        {view.hand.map((c, i) => (
+          <PlayingCard
+            key={`${key(c)}-h${i}`}
+            card={c}
+            size="md"
+            delay={Math.min(i, 8) * 30}
+            onClick={myTurn ? () => setHandSel(handSel === key(c) ? null : key(c)) : undefined}
+            selected={handSel === key(c)}
+            highlight={myTurn && handSel === key(c)}
+          />
+        ))}
+      </div>
+      {myTurn ? (
+        <div className="flex items-center gap-3">
+          <Button size="md" disabled={!canCapture} onClick={capture}>
+            Capture{targets.length ? ` ${targets.length}` : ""}
+          </Button>
+          <Button variant="quiet" size="md" disabled={!canTrail} onClick={trail}>Trail</Button>
+          {!handCard && <span className="text-xs text-cream/40">pick a card to play</span>}
+        </div>
+      ) : (
+        <p className="text-xs text-cream/45">Waiting…</p>
       )}
     </div>
   );
