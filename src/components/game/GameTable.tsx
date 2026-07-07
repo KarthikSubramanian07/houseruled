@@ -5,7 +5,9 @@ import { PlayingCard } from "./PlayingCard";
 import { Button } from "../Button";
 import { SUITS, SUIT_SYMBOL, RANK_LABEL, isRed, type Card, type Suit, type Rank } from "@/lib/engine/cards";
 import { getRule } from "@/lib/engine/houserules";
+import { GAME_CATALOG } from "@/lib/engine/registry";
 import { validCapture } from "@/lib/engine/games/casino";
+import { HowToPlay } from "./HowToPlay";
 import type { Action, GameView, PlayerPublic } from "@/lib/engine/types";
 
 const key = (c: Card) => (c.j ? "JK" : `${c.r}${c.s}`);
@@ -32,8 +34,15 @@ export function GameTable({
   const opponents = view.players.filter((p) => p.id !== view.you);
   const me = view.players.find((p) => p.id === view.you);
 
+  const gameName = GAME_CATALOG.find((g) => g.type === view.type)?.name ?? "";
+
   return (
     <div className="relative mx-auto flex w-full max-w-4xl flex-col gap-6">
+      {/* Quick rules reference — always one tap away. */}
+      <div className="absolute right-0 top-0 z-10">
+        <HowToPlay type={view.type} name={gameName} />
+      </div>
+
       {/* Opponents */}
       <div className="flex flex-wrap items-start justify-center gap-3">
         {opponents.map((p) => (
