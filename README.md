@@ -25,25 +25,27 @@ Houseruled is built in deliberate phases — each one playable before the next b
 | Phase | What | Status |
 | :---- | :--- | :----: |
 | 0 | Scaffolding — rooms, join-by-link, the felt table | ✅ |
-| 1 | The engine + 5 built-in games (War → Blackjack) | ✅ |
+| 1 | The engine + built-in games (War → Blackjack, + Hearts & Spades) | ✅ |
 | 2 | Toggle-based house rules (curated, pre-built) | ✅ |
 | 3 | Free-text AI house rules (*"queens reverse direction"*) | ✅ |
 | 4 | Whole games invented from a sentence | ✅ |
 | 5 | Community library, sharing, spectators, chat | ✅ |
 
 **Today you can:** spin up a table, share the code, and **play** — War, Go Fish,
-Old Maid, Crazy Eights, and Blackjack, live over WebSockets. Toggle curated
-**house rules**, or just *type your own in plain English* and the AI turns it into
-a real rule. You can even **describe a whole game in a sentence** and play what it
-invents — then save it to the community library.
+Old Maid, Crazy Eights, Blackjack, and the trick-taking pair **Hearts** and
+**Spades** — live over WebSockets. Toggle curated **house rules**, or just *type
+your own in plain English* and the AI turns it into a real rule. You can even
+**describe a whole game in a sentence** and play what it invents — then save it to
+the community library.
 
 ### The games (Phase 1)
 
 Every game runs **server-authoritatively inside the room's Durable Object** — it
 owns the deck, validates every move, and sends each player only their own hand.
-War → Go Fish → Old Maid → Crazy Eights → Blackjack, in rising complexity. The
-engine is pure, shared TypeScript with a big test suite (randomized playthroughs
-that conserve every card and always terminate).
+War → Go Fish → Old Maid → Crazy Eights → Blackjack, in rising complexity, plus
+the trick-taking pair **Hearts** and **Spades** (follow-suit, trump, bidding,
+shoot-the-moon) on a shared trick core. The engine is pure, shared TypeScript with
+a big test suite (randomized playthroughs that conserve every card and terminate).
 
 ### House rules (Phase 2)
 
@@ -71,8 +73,8 @@ Save it to the **community library** and share a `/game/<slug>` link.
 
 A D1-backed community library (browse, most-played), shareable game links,
 live **table chat**, spectators (late joiners watch), and reconnect-safe rooms
-(state lives in the Durable Object). Optional accounts and more games (Hearts,
-Spades, …) are the next things on deck.
+(state lives in the Durable Object). Optional accounts and more games (Euchre,
+Rummy, Cribbage, …) are the next things on deck.
 
 ## The free-forever table — all Cloudflare
 
