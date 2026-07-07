@@ -66,6 +66,36 @@ function slugify(name: string): string {
   return `${base}-${suffix}`;
 }
 
+// ── Write authentication (per-player secret, trust-on-first-use) ───────────────
+async function sha256hex(s: string): Promise<string> {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
+  return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+/**
+ * Prove the caller owns `id` before a write. First write for an id binds its
+ * secret hash (TOFU); later writes must match. Fails OPEN on DB errors (e.g. the
+ * table not migrated yet) so a rollout never blocks writes; only a definitive
+ * secret mismatch — or a claimed id presented with no secret — fails CLOSED.
+ */
+export async function authorizeWrite(env: LibraryEnv, id: string, secret: string): Promise<boolean> {
+  if (!env.DB) return true; // library not configured (e.g. next dev)
+  if (!id) return false;
+  try {
+    const row = await env.DB.prepare("select secret_hash from player_auth where player_id = ?").bind(id).first<{ secret_hash: string }>();
+    if (!row) {
+      if (!secret) return true; // legacy/unclaimed id → allow (can't bind without a secret)
+      const hash = await sha256hex(secret);
+      await env.DB.prepare("insert into player_auth (player_id, secret_hash) values (?, ?) on conflict(player_id) do nothing").bind(id, hash).run();
+      const check = await env.DB.prepare("select secret_hash from player_auth where player_id = ?").bind(id).first<{ secret_hash: string }>();
+      return !check || check.secret_hash === hash; // survive a concurrent bind race
+    }
+    return !!secret && row.secret_hash === (await sha256hex(secret));
+  } catch {
+    return true; // table missing / DB hiccup → don't block writes
+  }
+}
+
 // ── Profiles ──────────────────────────────────────────────────────────────────
 export interface Profile {
   id: string;

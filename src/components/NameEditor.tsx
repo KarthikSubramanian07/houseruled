@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getPlayer, setPlayerName } from "@/lib/identity";
+import { getPlayer, setPlayerName, getPlayerSecret } from "@/lib/identity";
 
 let synced = false; // upsert the public profile once per session
 
@@ -23,7 +23,7 @@ export function NameEditor({ onChange }: { onChange?: (name: string) => void }) 
       fetch("/api/profile", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ id: p.id, name: p.name }),
+        body: JSON.stringify({ id: p.id, name: p.name, secret: getPlayerSecret() }),
       }).catch(() => {});
     }
   }, []);
@@ -35,7 +35,7 @@ export function NameEditor({ onChange }: { onChange?: (name: string) => void }) 
     fetch("/api/profile", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ id, name: finalName }),
+      body: JSON.stringify({ id, name: finalName, secret: getPlayerSecret() }),
     }).catch(() => {});
     onChange?.(finalName);
   }

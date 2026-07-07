@@ -8,6 +8,7 @@ import { randomPlayerName } from "./names";
 
 const ID_KEY = "houseruled.player.id";
 const NAME_KEY = "houseruled.player.name";
+const SECRET_KEY = "houseruled.player.secret";
 
 function makeId(): string {
   const cryptoObj = typeof globalThis !== "undefined" ? globalThis.crypto : undefined;
@@ -60,6 +61,27 @@ export function getPlayer(): Player {
   }
 
   return { id, name };
+}
+
+/**
+ * A per-browser secret bound to this player's id, sent on write requests (profile
+ * name, saving a game, favoriting) so the server can prove the caller owns the id
+ * it's writing as. Kept OUT of the Player object so it never leaks into presence
+ * or the game view. Client-only; returns "" on the server.
+ */
+export function getPlayerSecret(): string {
+  if (typeof window === "undefined") return "";
+  try {
+    const store = window.localStorage;
+    let secret = store.getItem(SECRET_KEY);
+    if (!secret) {
+      secret = makeId() + makeId();
+      store.setItem(SECRET_KEY, secret);
+    }
+    return secret;
+  } catch {
+    return ""; // storage blocked → no secret; server falls back to unauthenticated
+  }
 }
 
 /** Rename the local player. Returns the trimmed name actually stored. */

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "../Button";
 import { GAME_CATALOG } from "@/lib/engine/registry";
-import { getPlayer } from "@/lib/identity";
+import { getPlayer, getPlayerSecret } from "@/lib/identity";
 import { startCustomTable } from "@/lib/play";
 
 interface Generated {
@@ -53,7 +53,7 @@ export function InventGame() {
       const res = await fetch("/api/games", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ ...game, creatorId: me.id, creatorName: me.name }),
+        body: JSON.stringify({ ...game, creatorId: me.id, creatorName: me.name, secret: getPlayerSecret() }),
       });
       const data = (await res.json()) as { ok: boolean; slug?: string };
       if (data.ok && data.slug) setSavedSlug(data.slug);

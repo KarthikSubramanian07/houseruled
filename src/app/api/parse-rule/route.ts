@@ -1,5 +1,6 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { parseWithCache, type AIEnv } from "@/lib/ai/groq";
+import { rateLimit, clientIp, tooMany } from "@/lib/ratelimit";
 
 // POST { text, game } → { ok, rule } | { ok:false, error }. Server-side only; the
 // Groq key stays on the Worker. Used by the pre-game setup to parse free-text
@@ -22,6 +23,10 @@ export async function POST(request: Request): Promise<Response> {
   } catch {
     /* not in the Cloudflare runtime (e.g. next dev) */
   }
+
+  // Cached by normalized text, but unique inputs still hit Groq — throttle per IP.
+  const rl = await rateLimit(env.RULE_CACHE, "parse", clientIp(request), 20, 60, 2000);
+  if (!rl.ok) return tooMany(rl.retryAfter);
 
   const result = await parseWithCache(text, game, env);
   return Response.json(result);
