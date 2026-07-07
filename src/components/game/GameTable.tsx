@@ -161,6 +161,14 @@ function OpponentBadge({ p, type }: { p: PlayerPublic; type: string }) {
         <span className="tabular text-xs text-brass">{String(p.extra.total)}{result ? ` · ${result}` : ""}</span>
       )}
       {books != null && <span className="text-xs text-brass">{books} books</span>}
+      {type === "hearts" && p.extra?.points != null && (
+        <span className="tabular text-xs text-brass">{String(p.extra.points)} pts</span>
+      )}
+      {type === "spades" && (
+        <span className="tabular text-xs text-brass">
+          {p.extra?.bid == null ? "bidding…" : `bid ${String(p.extra.bid)} · won ${String(p.extra.won ?? 0)}`}
+        </span>
+      )}
     </div>
   );
 }
@@ -254,23 +262,62 @@ function Center({ view, onAction }: { view: GameView; onAction: (a: Action) => v
         </div>
       );
     }
+    case "hearts":
+    case "spades": {
+      const trick = (c.trick as { card: Card; name: string }[]) ?? [];
+      const trump = view.type === "spades";
+      const broken = trump ? (c.spadesBroken as boolean) : (c.heartsBroken as boolean);
+      const bidding = trump && c.phase === "bidding";
+      const myTurn = view.turn === view.you;
+      if (bidding) {
+        return (
+          <div className="flex flex-col items-center gap-2 py-4">
+            <span className="font-display text-xl text-cream/80">Bidding</span>
+            <span className="text-xs text-cream/50">{myTurn ? "How many tricks will you take?" : "Waiting for bids…"}</span>
+          </div>
+        );
+      }
+      return (
+        <div className="flex flex-col items-center gap-3">
+          <div className="flex min-h-24 items-center justify-center gap-3">
+            {trick.length === 0 ? (
+              <span className="text-sm text-cream/45">{myTurn ? "Lead a card." : "Waiting…"}</span>
+            ) : (
+              trick.map((p, i) => (
+                <div key={i} className="deal-in flex flex-col items-center gap-1">
+                  <PlayingCard card={p.card} size="md" />
+                  <span className="max-w-16 truncate text-xs text-cream/55">{p.name}</span>
+                </div>
+              ))
+            )}
+          </div>
+          <span className="text-xs text-cream/45">
+            Trick {(c.trickCount as number) + 1} / 13
+            {trump ? " · ♠ trump" : ""}
+            {broken ? "" : trump ? " · spades unbroken" : " · hearts unbroken"}
+          </span>
+        </div>
+      );
+    }
     default:
       return null;
   }
 }
 
 // ── Your hand ─────────────────────────────────────────────────────────────────
+const CARD_PLAY = new Set(["crazyeights", "hearts", "spades"]);
+
 function Hand({ view, onAction }: { view: GameView; onAction: (a: Action) => void }) {
   const [wild, setWild] = useState<Card | null>(null);
-  const playable = new Set(
-    view.type === "crazyeights"
-      ? view.legal.filter((a) => a.type === "play").map((a) => key(a.card as Card))
-      : [],
+  const isCardPlay = CARD_PLAY.has(view.type);
+  const playMap = new Map(
+    isCardPlay ? view.legal.filter((a) => a.type === "play").map((a) => [key(a.card as Card), a] as const) : [],
   );
 
   function clickCard(card: Card) {
-    if (view.type !== "crazyeights" || !playable.has(key(card))) return;
-    if (card.r === 8) setWild(card);
+    const a = playMap.get(key(card));
+    if (!a) return;
+    if ((a as { wild?: boolean }).wild) setWild(card); // crazyeights 8 / AI-wild
     else onAction({ type: "play", card });
   }
 
@@ -278,7 +325,7 @@ function Hand({ view, onAction }: { view: GameView; onAction: (a: Action) => voi
     <>
       <div className="flex flex-wrap items-end justify-center gap-1.5">
         {view.hand.map((card, i) => {
-          const canPlay = playable.has(key(card));
+          const canPlay = playMap.has(key(card));
           const myTurn = view.turn === view.you;
           return (
             <PlayingCard
@@ -286,9 +333,9 @@ function Hand({ view, onAction }: { view: GameView; onAction: (a: Action) => voi
               card={card}
               size="md"
               delay={Math.min(i, 8) * 45}
-              onClick={view.type === "crazyeights" && canPlay ? () => clickCard(card) : undefined}
-              highlight={view.type === "crazyeights" && myTurn && canPlay}
-              dimmed={view.type === "crazyeights" && myTurn && !canPlay}
+              onClick={isCardPlay && canPlay ? () => clickCard(card) : undefined}
+              highlight={isCardPlay && myTurn && canPlay}
+              dimmed={isCardPlay && myTurn && !canPlay}
             />
           );
         })}
@@ -340,6 +387,22 @@ function ActionBar({ view, onAction }: { view: GameView; onAction: (a: Action) =
   }
   if (view.type === "gofish" && has("ask")) {
     return <GoFishAsk view={view} onAction={onAction} />;
+  }
+  if (view.type === "spades" && has("bid")) {
+    return (
+      <div className="flex max-w-md flex-wrap items-center justify-center gap-1.5">
+        <span className="mr-1 text-xs text-cream/60">Your bid:</span>
+        {Array.from({ length: 14 }, (_, n) => (
+          <button
+            key={n}
+            onClick={() => onAction({ type: "bid", n })}
+            className="tabular grid h-9 w-9 place-items-center rounded-lg bg-cream text-sm text-ink transition-transform hover:-translate-y-0.5 hover:ring-2 hover:ring-brass"
+          >
+            {n === 0 ? "Nil" : n}
+          </button>
+        ))}
+      </div>
+    );
   }
   return null;
 }
