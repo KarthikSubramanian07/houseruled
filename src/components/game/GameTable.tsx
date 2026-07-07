@@ -57,6 +57,8 @@ export function GameTable({
       <div className="flex flex-col items-center gap-4">
         {view.type === "cheat" ? (
           <CheatControls view={view} onAction={onAction} />
+        ) : view.type === "gin" ? (
+          <GinControls view={view} onAction={onAction} />
         ) : (
           <>
             {me && <ActionBar view={view} onAction={onAction} />}
@@ -178,6 +180,17 @@ function OpponentBadge({ p, type }: { p: PlayerPublic; type: string }) {
       {type === "euchre" && (
         <span className="text-xs text-brass/80">
           Team {p.extra?.team === 0 ? "A" : "B"}{p.extra?.isMaker ? " · maker" : ""}
+        </span>
+      )}
+      {type === "scopa" && (
+        <span className="tabular text-xs text-brass/80">
+          {String(p.extra?.captured ?? 0)} cards{Number(p.extra?.scope ?? 0) > 0 ? ` · ${p.extra?.scope} scopa` : ""}
+        </span>
+      )}
+      {type === "pitch" && (
+        <span className="tabular text-xs text-brass/80">
+          {p.extra?.isPitcher ? `pitched ${String(p.extra?.bid ?? "")}` : "in the hand"}
+          {p.extra?.score != null ? ` · ${Number(p.extra.score) >= 0 ? "+" : ""}${String(p.extra.score)}` : ""}
         </span>
       )}
     </div>
@@ -343,6 +356,37 @@ function Center({ view, onAction }: { view: GameView; onAction: (a: Action) => v
         </div>
       );
     }
+    case "scopa": {
+      const table = (c.table as Card[]) ?? [];
+      return (
+        <div className="flex flex-col items-center gap-2">
+          <div className="flex min-h-24 flex-wrap items-center justify-center gap-1.5">
+            {table.length === 0 ? (
+              <span className="text-sm text-cream/45">Table is clear.</span>
+            ) : (
+              table.map((cd, i) => <PlayingCard key={`${cd.r}${cd.s}-${i}`} card={cd} size="md" />)
+            )}
+          </div>
+          <span className="tabular text-xs text-cream/45">Table · {table.length} cards · deck {String(c.deckCount)}</span>
+        </div>
+      );
+    }
+    case "gin": {
+      const top = c.discardTop as Card | null;
+      const stockCount = c.stockCount as number;
+      return (
+        <div className="flex items-end justify-center gap-6">
+          <div className="flex flex-col items-center gap-1">
+            {stockCount > 0 ? <PlayingCard faceDown size="lg" /> : <div className="h-28 w-20 rounded-lg border border-dashed border-cream/20" />}
+            <span className="tabular text-xs text-cream/50">stock · {stockCount}</span>
+          </div>
+          <div className="flex flex-col items-center gap-1">
+            {top ? <PlayingCard card={top} size="lg" /> : <div className="h-28 w-20 rounded-lg border border-dashed border-cream/20" />}
+            <span className="text-xs text-cream/50">discard</span>
+          </div>
+        </div>
+      );
+    }
     case "cheat": {
       const claim = c.claim as { name: string; rank: string; count: number } | null;
       const pileCount = c.pileCount as number;
@@ -399,13 +443,50 @@ function Center({ view, onAction }: { view: GameView; onAction: (a: Action) => v
         </div>
       );
     }
+    case "pitch": {
+      const trick = (c.trick as { card: Card; name: string }[]) ?? [];
+      const trump = c.trump as Suit | null;
+      const myTurn = view.turn === view.you;
+      if (c.phase === "bidding") {
+        return (
+          <div className="flex flex-col items-center gap-2 py-4">
+            <span className="font-display text-xl text-cream/80">Bidding</span>
+            <span className="text-xs text-cream/50">
+              {c.highBid ? `${c.pitcherName} bids ${String(c.highBid)}` : "No bids yet"}
+              {" · "}{myTurn ? "bid 2–4 for the points you'll take, or pass" : "waiting for bids…"}
+            </span>
+          </div>
+        );
+      }
+      return (
+        <div className="flex flex-col items-center gap-3">
+          <div className="flex min-h-24 items-center justify-center gap-3">
+            {trick.length === 0 ? (
+              <span className="text-sm text-cream/45">
+                {myTurn ? (trump ? "Lead a card." : "Lead — the suit you play sets trump.") : "Waiting…"}
+              </span>
+            ) : (
+              trick.map((p, i) => (
+                <div key={i} className="deal-in flex flex-col items-center gap-1">
+                  <PlayingCard card={p.card} size="md" />
+                  <span className="max-w-16 truncate text-xs text-cream/55">{p.name}</span>
+                </div>
+              ))
+            )}
+          </div>
+          <span className="text-xs text-cream/45">
+            {trump ? `Trump ${SUIT_SYMBOL[trump]}` : "Trump not set"} · {String(c.pitcherName)} pitched {String(c.highBid)} · Trick {(c.trickCount as number) + 1} / 6
+          </span>
+        </div>
+      );
+    }
     default:
       return null;
   }
 }
 
 // ── Your hand ─────────────────────────────────────────────────────────────────
-const CARD_PLAY = new Set(["crazyeights", "hearts", "spades", "euchre", "ohhell"]);
+const CARD_PLAY = new Set(["crazyeights", "hearts", "spades", "euchre", "ohhell", "scopa", "pitch"]);
 
 function Hand({ view, onAction }: { view: GameView; onAction: (a: Action) => void }) {
   const [wild, setWild] = useState<Card | null>(null);
@@ -559,6 +640,24 @@ function ActionBar({ view, onAction }: { view: GameView; onAction: (a: Action) =
       </div>
     );
   }
+  if (view.type === "pitch" && (has("bid") || has("pass"))) {
+    const bids = legal.filter((a) => a.type === "bid").map((a) => a.n as number);
+    return (
+      <div className="flex max-w-md flex-wrap items-center justify-center gap-1.5">
+        <span className="mr-1 text-xs text-cream/60">Bid:</span>
+        {bids.map((n) => (
+          <button
+            key={n}
+            onClick={() => onAction({ type: "bid", n })}
+            className="tabular grid h-9 w-9 place-items-center rounded-lg bg-cream text-sm text-ink transition-transform hover:-translate-y-0.5 hover:ring-2 hover:ring-brass"
+          >
+            {n}
+          </button>
+        ))}
+        {has("pass") && <Button variant="quiet" size="md" onClick={() => onAction({ type: "pass" })}>Pass</Button>}
+      </div>
+    );
+  }
   return null;
 }
 
@@ -652,6 +751,69 @@ function CheatControls({ view, onAction }: { view: GameView; onAction: (a: Actio
         </div>
       ) : (
         <p className="text-xs text-cream/45">Waiting…</p>
+      )}
+    </div>
+  );
+}
+
+// ── Gin Rummy controls: draw, then select a card to discard / knock / gin ─────
+function GinControls({ view, onAction }: { view: GameView; onAction: (a: Action) => void }) {
+  const [sel, setSel] = useState<string | null>(null);
+  const myTurn = view.turn === view.you;
+  const phase = view.center.phase as string;
+  const melded = new Set(view.center.melded as string[]);
+  const deadwood = view.center.deadwood as number;
+
+  const drawStock = view.legal.some((a) => a.type === "drawStock");
+  const drawDiscard = view.legal.some((a) => a.type === "drawDiscard");
+  const canKnock = sel != null && view.legal.some((a) => a.type === "knock" && key(a.card as Card) === sel);
+  const canGin = sel != null && view.legal.some((a) => a.type === "gin" && key(a.card as Card) === sel);
+  const selCard = view.hand.find((c) => key(c) === sel);
+
+  function act(type: string) {
+    if (!selCard) return;
+    onAction({ type, card: selCard });
+    setSel(null);
+  }
+
+  return (
+    <div className="flex flex-col items-center gap-3">
+      {phase === "discard" && myTurn && (
+        <span className="text-xs text-cream/50">
+          Deadwood: <span className={deadwood <= 10 ? "text-brass" : "text-cream/70"}>{deadwood}</span>
+          {deadwood <= 10 && " — you can knock"}
+        </span>
+      )}
+      <div className="flex flex-wrap items-end justify-center gap-1.5">
+        {view.hand.map((card, i) => (
+          <PlayingCard
+            key={`${key(card)}-${i}`}
+            card={card}
+            size="md"
+            delay={Math.min(i, 8) * 30}
+            onClick={phase === "discard" && myTurn ? () => setSel(key(card)) : undefined}
+            selected={sel === key(card)}
+            highlight={melded.has(key(card))}
+          />
+        ))}
+      </div>
+      {!myTurn ? (
+        <p className="text-xs text-cream/45">Waiting…</p>
+      ) : phase === "draw" ? (
+        <div className="flex gap-3">
+          {drawStock && <Button size="md" onClick={() => onAction({ type: "drawStock" })}>Draw from stock</Button>}
+          {drawDiscard && <Button variant="quiet" size="md" onClick={() => onAction({ type: "drawDiscard" })}>Take discard</Button>}
+        </div>
+      ) : (
+        <div className="flex items-center gap-3">
+          <Button size="md" disabled={!selCard} onClick={() => act("discard")}>Discard</Button>
+          {canGin ? (
+            <Button variant="quiet" size="md" onClick={() => act("gin")}>Gin! ✦</Button>
+          ) : canKnock ? (
+            <Button variant="quiet" size="md" onClick={() => act("knock")}>Knock</Button>
+          ) : null}
+          {!selCard && <span className="text-xs text-cream/40">pick a card</span>}
+        </div>
       )}
     </div>
   );
