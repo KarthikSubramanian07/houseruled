@@ -12,9 +12,10 @@ import { hearts } from "./games/hearts";
 import { spades } from "./games/spades";
 import { euchre } from "./games/euchre";
 import { cheat } from "./games/cheat";
+import { ohhell } from "./games/ohhell";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const LIST: GameDefinition<any>[] = [war, gofish, oldmaid, crazyeights, blackjack, hearts, spades, euchre, cheat];
+const LIST: GameDefinition<any>[] = [war, gofish, oldmaid, crazyeights, blackjack, hearts, spades, euchre, cheat, ohhell];
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const GAMES: Record<string, GameDefinition<any>> = Object.fromEntries(
