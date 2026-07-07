@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getGuide } from "@/lib/engine/guides";
 
 /** The guide content itself — reusable inside a modal, a card, or a lobby panel. */
@@ -34,6 +34,17 @@ export function GuideBody({ type, className = "" }: { type: string; className?: 
 /** A "How to play" text trigger that opens the guide in a modal. */
 export function HowToPlay({ type, name, className = "" }: { type: string; name: string; className?: string }) {
   const [open, setOpen] = useState(false);
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  // Escape to close, and move focus into the dialog when it opens.
+  useEffect(() => {
+    if (!open) return;
+    panelRef.current?.focus();
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
+
   if (!getGuide(type)) return null;
 
   return (
@@ -50,12 +61,17 @@ export function HowToPlay({ type, name, className = "" }: { type: string; name: 
           onClick={() => setOpen(false)}
         >
           <div
-            className="deal-in flex max-h-[85vh] w-full max-w-md flex-col gap-4 overflow-y-auto rounded-2xl border border-brass/40 bg-felt-dark p-6 shadow-2xl"
+            ref={panelRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label={`How to play ${name}`}
+            tabIndex={-1}
+            className="deal-in flex max-h-[85vh] w-full max-w-md flex-col gap-4 overflow-y-auto rounded-2xl border border-brass/40 bg-felt-dark p-6 shadow-2xl outline-none"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start justify-between gap-4">
               <h2 className="font-display text-2xl text-cream">{name}</h2>
-              <button onClick={() => setOpen(false)} className="text-cream/40 transition-colors hover:text-cream" aria-label="Close">✕</button>
+              <button onClick={() => setOpen(false)} className="shrink-0 text-cream/40 transition-colors hover:text-cream" aria-label="Close">✕</button>
             </div>
             <GuideBody type={type} />
           </div>

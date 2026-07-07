@@ -45,7 +45,7 @@ export default function GamePage({ params }: { params: Promise<{ slug: string }>
       <SiteHeader />
       <main className="mx-auto flex w-full max-w-lg flex-1 flex-col items-center justify-center gap-6 px-5 pb-16 text-center">
         {game === undefined ? (
-          <p className="text-cream/50">Loading…</p>
+          <p className="text-cream/50">Cutting the deck…</p>
         ) : game === null ? (
           <>
             <p className="font-display text-4xl text-brass">Game not found</p>

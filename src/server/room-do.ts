@@ -38,8 +38,10 @@ interface GameSlot {
   state: unknown;
 }
 
+const MAX_SOCKETS = 50; // generous ceiling per room (players + spectators) — DoS guard
+
 type ClientMessage =
-  | { t: "join"; id: string; name: string }
+  | { t: "join"; id: string; name: string; token?: string }
   | { t: "start"; game: string; rules?: string[]; ruleTexts?: string[] }
   | { t: "action"; action: Action }
   | { t: "proposeRule"; text: string }
@@ -59,10 +61,30 @@ export class RoomDO implements DurableObject {
   private readonly state: DurableObjectState;
   private readonly env: AIEnv;
   private game: GameSlot | null | undefined = undefined; // undefined = not yet loaded
+  private tokens: Record<string, string> | undefined; // playerId → server-minted secret
 
   constructor(state: DurableObjectState, env: AIEnv) {
     this.state = state;
     this.env = env;
+  }
+
+  /** Per-room identity: a secret token bound to each player id, so a client can't
+   *  claim someone else's id (and thus read their hand or play their turn). */
+  private async loadTokens(): Promise<Record<string, string>> {
+    if (this.tokens === undefined) {
+      this.tokens = (await this.state.storage.get<Record<string, string>>("tokens")) ?? {};
+    }
+    return this.tokens;
+  }
+
+  /** Is this id currently held by another authenticated socket? */
+  private isIdConnected(id: string, except: WebSocket): boolean {
+    for (const ws of this.state.getWebSockets()) {
+      if (ws === except) continue;
+      const att = this.attachmentOf(ws);
+      if (att && att.id === id) return true;
+    }
+    return false;
   }
 
   private async getMeta(): Promise<RoomMeta | null> {
@@ -151,27 +173,43 @@ export class RoomDO implements DurableObject {
     }
   }
 
-  private async onJoin(ws: WebSocket, msg: { id: string; name: string }): Promise<void> {
+  private async onJoin(ws: WebSocket, msg: { id: string; name: string; token?: string }): Promise<void> {
     const meta = await this.getMeta();
-    // SECURITY (Phase 1 TODO): isHost is derived from a client-supplied id, so
-    // it's spoofable. Harmless today — it only drives a cosmetic badge and the
-    // start button, and the server re-checks host on privileged actions below by
-    // the same id. Before real stakes, issue the host a server-side secret.
+    const id = String(msg.id ?? "");
+    if (!id) return;
+    if (this.state.getWebSockets().length > MAX_SOCKETS) return this.sendError(ws, "This table is full.");
+
+    // Identity check. A player id is bound to a secret token on first join. You may
+    // (re)claim an id if you hold its token, or if nobody is currently connected as
+    // that id (reconnect / lost-token recovery). You may NOT hijack an id that
+    // another live socket is actively holding — that's the hand-reading / turn-steal
+    // attack. Ids leak via presence/views, so possession of the id alone is not proof.
+    const tokens = await this.loadTokens();
+    const known = tokens[id];
+    const provided = typeof msg.token === "string" ? msg.token : "";
+    if (!(known && provided === known)) {
+      if (this.isIdConnected(id, ws)) {
+        return this.sendError(ws, "That seat is already in play on another device.");
+      }
+      // Idle or brand-new id → mint a fresh secret and hand it back to this client.
+      const token = crypto.randomUUID();
+      tokens[id] = token;
+      await this.state.storage.put("tokens", tokens);
+      this.sendJson(ws, { t: "welcome", token });
+    }
+
     const attachment: SocketAttachment = {
-      id: String(msg.id ?? ""),
+      id,
       name: String(msg.name ?? "Player").slice(0, 24),
-      isHost: !!meta && msg.id === meta.hostId,
+      isHost: !!meta && id === meta.hostId,
       joinedAt: Date.now(),
     };
     ws.serializeAttachment(attachment);
     this.broadcastPresence();
     // Catch a (re)joining player up on any game in progress.
     const game = await this.loadGame();
-    if (game && attachment.id) {
-      this.sendGameTo(ws, attachment.id, game);
-    } else {
-      this.sendJson(ws, { t: "game", view: null });
-    }
+    if (game) this.sendGameTo(ws, id, game);
+    else this.sendJson(ws, { t: "game", view: null });
   }
 
   private async onStart(ws: WebSocket, msg: { game: string; rules?: string[]; ruleTexts?: string[] }): Promise<void> {

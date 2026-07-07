@@ -5,7 +5,7 @@
 // their partnership tries to make the contract. Bowers and the Joker are the top
 // trumps. First partnership to 500 wins; drop to −500 and you lose.
 
-import { SUITS, isJoker, JOKER, type Card, type Suit, type Rank } from "../cards";
+import { SUITS, isJoker, isRed, JOKER, type Card, type Suit, type Rank } from "../cards";
 import { shuffle } from "../cards";
 import { makeRng } from "../rng";
 import { nextActiveIndex, type ApplyResult, type GameDefinition, type GameStatus, type GameView, type SeatInfo } from "../types";
@@ -14,8 +14,7 @@ type Bid = Suit | "NT";
 const BID_ORDER: Bid[] = ["S", "C", "D", "H", "NT"]; // ascending value
 const BID_LABEL: Record<Bid, string> = { S: "♠", C: "♣", D: "♦", H: "♥", NT: "No-trump" };
 const team = (seat: number) => seat % 2;
-const isRedSuit = (s: Suit) => s === "H" || s === "D";
-const sameColor = (a: Suit, b: Suit) => isRedSuit(a) === isRedSuit(b);
+const sameColor = (a: Suit, b: Suit) => isRed(a) === isRed(b);
 /** Rank order with Ace high (A=14 … 4=4). */
 const ord = (r: Rank) => (r === 1 ? 14 : r);
 const jkey = (c: Card) => (c.j ? "JK" : `${c.r}${c.s}`);
@@ -28,7 +27,7 @@ export function bidValue(tricks: number, bid: Bid): number {
 export function fiveHundredDeck(): Card[] {
   const cards: Card[] = [];
   for (const s of SUITS) {
-    const ranks: Rank[] = isRedSuit(s) ? [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 1] : [5, 6, 7, 8, 9, 10, 11, 12, 13, 1];
+    const ranks: Rank[] = isRed(s) ? [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 1] : [5, 6, 7, 8, 9, 10, 11, 12, 13, 1];
     for (const r of ranks) cards.push({ s, r });
   }
   cards.push({ ...JOKER });
@@ -52,7 +51,6 @@ interface FiveState {
   contract: { tricks: number; bid: Bid; value: number } | null;
   declarer: number;
   trick: PlayedCard[];
-  leader: number;
   turn: number;
   tricksWon: [number, number];
   trickCount: number;
@@ -112,6 +110,12 @@ export function legalPlays(hand: Card[], trick: PlayedCard[], bid: Bid): Card[] 
   if (trick.length === 0) return hand.slice();
   const led = effSuit(trick[0].card, bid);
   const following = hand.filter((c) => effSuit(c, bid) === led);
+  // No-trump: the Joker is the top card and may be played at any time, even when
+  // you could follow the led suit.
+  if (bid === "NT" && following.length > 0) {
+    const joker = hand.find(isJoker);
+    if (joker && !following.some(isJoker)) return [...following, joker];
+  }
   return following.length > 0 ? following : hand.slice();
 }
 
@@ -132,7 +136,6 @@ function dealHands(s: FiveState, dealer: number): FiveState {
     contract: null,
     declarer: -1,
     trick: [],
-    leader: (dealer + 1) % 4,
     turn: (dealer + 1) % 4,
     tricksWon: [0, 0],
     trickCount: 0,
@@ -199,7 +202,6 @@ export const fivehundred: GameDefinition<FiveState> = {
       contract: null,
       declarer: -1,
       trick: [],
-      leader: 0,
       turn: 0,
       tricksWon: [0, 0],
       trickCount: 0,
@@ -283,7 +285,7 @@ export const fivehundred: GameDefinition<FiveState> = {
       hands[seat] = hands[seat].filter((c) => jkey(c) !== jkey(card));
       let next: FiveState = { ...state, hands };
       if (hands[seat].length === 10) {
-        next = { ...next, phase: "playing", leader: seat, turn: seat, log: push(state.log, `${state.players[seat].name} is set. Play begins.`) };
+        next = { ...next, phase: "playing", turn: seat, log: push(state.log, `${state.players[seat].name} is set. Play begins.`) };
       }
       return { ok: true, state: next };
     }
@@ -301,7 +303,6 @@ export const fivehundred: GameDefinition<FiveState> = {
       const trick = [...state.trick, { seat, card }];
       let log = state.log;
       const tricksWon: [number, number] = [state.tricksWon[0], state.tricksWon[1]];
-      let leader = state.leader;
       let turn: number;
       let trickCount = state.trickCount;
 
@@ -309,13 +310,12 @@ export const fivehundred: GameDefinition<FiveState> = {
         const winner = trickWinner(trick, state.contract!.bid);
         tricksWon[team(winner)] += 1;
         trickCount += 1;
-        leader = winner;
         turn = winner;
         log = push(log, `${state.players[winner].name} takes trick ${trickCount}.`);
         if (trickCount === 10) {
-          return { ok: true, state: scoreDeal({ ...state, hands, trick: [], tricksWon, trickCount, leader, turn, log }) };
+          return { ok: true, state: scoreDeal({ ...state, hands, trick: [], tricksWon, trickCount, turn, log }) };
         }
-        return { ok: true, state: { ...state, hands, trick: [], tricksWon, trickCount, leader, turn, log } };
+        return { ok: true, state: { ...state, hands, trick: [], tricksWon, trickCount, turn, log } };
       }
       turn = (seat + 1) % 4;
       return { ok: true, state: { ...state, hands, trick, turn, log } };

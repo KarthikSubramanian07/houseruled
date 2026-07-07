@@ -84,6 +84,12 @@ export function joinRoomChannel(opts: JoinOptions): RoomChannel {
 
   onStatus?.("connecting");
   let destroyed = false;
+  // Per-room identity token: proves this client owns `player.id` so nobody else
+  // can claim the seat (and read this hand). Minted by the server on first join.
+  const tokenKey = `ht:tok:${code}`;
+  const readToken = (): string | undefined => {
+    try { return localStorage.getItem(tokenKey) ?? undefined; } catch { return undefined; }
+  };
   const proto = window.location.protocol === "https:" ? "wss" : "ws";
   const ws = new WebSocket(`${proto}://${window.location.host}/api/room/${code}/ws`);
 
@@ -97,7 +103,7 @@ export function joinRoomChannel(opts: JoinOptions): RoomChannel {
 
   ws.onopen = () => {
     if (destroyed) return ws.close();
-    send({ t: "join", id: player.id, name: player.name });
+    send({ t: "join", id: player.id, name: player.name, token: readToken() });
     onStatus?.("connected");
   };
 
@@ -112,13 +118,16 @@ export function joinRoomChannel(opts: JoinOptions): RoomChannel {
       id?: string;
       text?: string;
       at?: number;
+      token?: string;
     };
     try {
       msg = JSON.parse(ev.data);
     } catch {
       return;
     }
-    if (msg.t === "presence" && Array.isArray(msg.players)) onPlayers(toSeats(msg.players, player.id));
+    if (msg.t === "welcome" && typeof msg.token === "string") {
+      try { localStorage.setItem(tokenKey, msg.token); } catch { /* storage blocked */ }
+    } else if (msg.t === "presence" && Array.isArray(msg.players)) onPlayers(toSeats(msg.players, player.id));
     else if (msg.t === "game") onGame(msg.view ?? null);
     else if (msg.t === "error" && msg.message) onError?.(msg.message);
     else if (msg.t === "notice" && msg.message) onNotice?.(msg.message);

@@ -6,11 +6,10 @@
 import { standardDeck, shuffle, type Card, type Suit, type Rank } from "../cards";
 import { makeRng } from "../rng";
 import { nextActiveIndex, type ApplyResult, type GameDefinition, type GameStatus, type GameView, type SeatInfo } from "../types";
-import { followSuit, trickWinner, type PlayedCard } from "./tricks";
+import { trickWinner, trickRank, type PlayedCard } from "./tricks";
 
 const HAND = 6;
 const gamePts = (r: Rank) => ({ 1: 4, 13: 3, 12: 2, 11: 1, 10: 10 } as Record<number, number>)[r] ?? 0;
-const trumpRank = (r: Rank) => (r === 1 ? 14 : r);
 
 interface PitchState {
   type: "pitch";
@@ -25,7 +24,6 @@ interface PitchState {
   pitcher: number;
   trump: Suit | null;
   trick: PlayedCard[];
-  leader: number;
   turn: number;
   won: Card[][]; // cards each seat has taken in tricks
   trickCount: number;
@@ -48,8 +46,8 @@ function tally(state: PitchState, bidAmount: number): { scores: number[]; breakd
 
   const trumpCards = state.won.flat().filter((c) => c.s === trump);
   if (trumpCards.length > 0) {
-    const high = trumpCards.reduce((a, b) => (trumpRank(b.r) > trumpRank(a.r) ? b : a));
-    const low = trumpCards.reduce((a, b) => (trumpRank(b.r) < trumpRank(a.r) ? b : a));
+    const high = trumpCards.reduce((a, b) => (trickRank(b.r) > trickRank(a.r) ? b : a));
+    const low = trumpCards.reduce((a, b) => (trickRank(b.r) < trickRank(a.r) ? b : a));
     const hi = ownerOf((c) => c.s === trump && c.r === high.r);
     const lo = ownerOf((c) => c.s === trump && c.r === low.r);
     raw[hi] += 1; parts.push(`${state.players[hi].name} High`);
@@ -99,7 +97,6 @@ export const pitch: GameDefinition<PitchState> = {
       pitcher: -1,
       trump: null,
       trick: [],
-      leader: 0,
       turn: 0,
       won: [[], [], [], []],
       trickCount: 0,
@@ -124,9 +121,17 @@ export const pitch: GameDefinition<PitchState> = {
     }
     if (seat !== state.turn) return [];
     const hand = state.hands[seat];
-    // First lead sets trump → any card. Otherwise follow the led suit.
+    // First lead sets trump → any card.
     if (state.trick.length === 0) return hand.map((card) => ({ type: "play", card }));
-    return followSuit(hand, state.trick[0].card.s).map((card) => ({ type: "play", card }));
+    // Otherwise follow the led suit — but a player may ALWAYS trump in (Auction
+    // Pitch), and if void of the led suit may play anything.
+    const led = state.trick[0].card.s;
+    const canFollow = hand.filter((c) => c.s === led);
+    if (canFollow.length === 0) return hand.map((card) => ({ type: "play", card }));
+    const legal = state.trump && state.trump !== led
+      ? [...canFollow, ...hand.filter((c) => c.s === state.trump)]
+      : canFollow;
+    return legal.map((card) => ({ type: "play", card }));
   },
 
   apply(state, actor, action): ApplyResult<PitchState> {
@@ -171,7 +176,6 @@ export const pitch: GameDefinition<PitchState> = {
     const trick = [...state.trick, { seat, card }];
     let log = state.log;
     const won = state.won.map((w) => w.slice());
-    let leader = state.leader;
     let turn = state.turn;
     let trickCount = state.trickCount;
 
@@ -179,14 +183,13 @@ export const pitch: GameDefinition<PitchState> = {
       const winner = trick[trickWinner(trick, trump)].seat;
       won[winner].push(...trick.map((t) => t.card));
       trickCount += 1;
-      leader = winner;
       turn = winner;
       log = push(log, `${state.players[winner].name} takes trick ${trickCount}.`);
       if (trickCount === HAND) {
         const scored = tally({ ...state, trump, won }, state.highBid);
         return { ok: true, state: { ...state, hands, trump, trick: [], won, trickCount, over: true, scores: scored.scores, breakdown: scored.breakdown, log: push(log, scored.breakdown) } };
       }
-      return { ok: true, state: { ...state, hands, trump, trick: [], won, leader, turn, trickCount, log } };
+      return { ok: true, state: { ...state, hands, trump, trick: [], won, turn, trickCount, log } };
     }
     turn = nextActiveIndex(4, seat, 1, () => false);
     return { ok: true, state: { ...state, hands, trump, trick, turn, log } };
@@ -236,7 +239,7 @@ function startPlay(state: PitchState): PitchState {
   // If nobody bid (all passed to a non-stuck dealer path shouldn't happen), pitcher is the dealer at 2.
   const pitcher = state.pitcher >= 0 ? state.pitcher : state.dealer;
   const highBid = state.highBid > 0 ? state.highBid : 2;
-  return { ...state, phase: "playing", pitcher, highBid, leader: pitcher, turn: pitcher, log: push(state.log, `${state.players[pitcher].name} pitches for ${highBid}. Lead sets trump.`) };
+  return { ...state, phase: "playing", pitcher, highBid, turn: pitcher, log: push(state.log, `${state.players[pitcher].name} pitches for ${highBid}. Lead sets trump.`) };
 }
 
 function sortHand(hand: Card[]): Card[] {

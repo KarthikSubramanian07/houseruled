@@ -115,8 +115,8 @@ export function GameSetup({
               key={g.type}
               onClick={() => chooseGame(g.type)}
               disabled={!ok}
-              className={`felt-panel rounded-xl p-4 text-left transition-colors disabled:opacity-40 ${
-                active ? "!border-brass ring-1 ring-brass" : "hover:border-brass/50"
+              className={`felt-panel rounded-xl p-4 text-left transition disabled:opacity-40 ${
+                active ? "!border-brass ring-1 ring-brass" : "enabled:hover:-translate-y-0.5 hover:border-brass/50"
               }`}
             >
               <div className="flex items-baseline justify-between gap-2">

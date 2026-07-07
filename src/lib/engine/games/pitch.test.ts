@@ -37,6 +37,18 @@ describe("pitch", () => {
     expect(dealer.some((x) => x.n === 2)).toBe(true);
   });
 
+  it("lets a player trump in even when they can follow the led suit", () => {
+    let s = pitch.init(seats, [], 1);
+    // Hearts trump, spades led; seat B holds a spade (can follow) AND a heart (trump).
+    s = { ...s, phase: "playing", trump: "H", turn: 1, trick: [{ seat: 0, card: { r: 9, s: "S" } }],
+      hands: [s.hands[0], [{ r: 5, s: "S" }, { r: 3, s: "H" }], s.hands[2], s.hands[3]] };
+    const legal = pitch.legalActions(s, "b");
+    const cards = legal.map((a) => `${(a.card as { r: number; s: string }).r}${(a.card as { r: number; s: string }).s}`);
+    expect(cards).toContain("3H"); // may ruff with the trump
+    expect(cards).toContain("5S"); // or follow suit
+    expect(pitch.apply(s, "b", { type: "play", card: { r: 3, s: "H" } }).ok).toBe(true);
+  });
+
   it("plays full hands and awards ≤4 points (with a possible set)", () => {
     for (const seed of [1, 2, 5, 8, 20, 41]) {
       let s = pitch.init(seats, [], seed);

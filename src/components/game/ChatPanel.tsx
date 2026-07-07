@@ -39,7 +39,7 @@ export function ChatPanel({
         <div className="flex h-80 w-72 max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-2xl border border-brass/25 bg-felt-dark/95 shadow-2xl backdrop-blur">
           <div className="flex items-center justify-between border-b border-brass/15 px-3 py-2">
             <span className="plaque-header text-xs text-brass/70">Table chat</span>
-            <button onClick={() => setOpen(false)} className="text-cream/40 hover:text-cream">✕</button>
+            <button onClick={() => setOpen(false)} aria-label="Close chat" className="text-cream/40 hover:text-cream">✕</button>
           </div>
           <div ref={scrollRef} className="flex-1 space-y-2 overflow-y-auto px-3 py-2">
             {messages.length === 0 ? (

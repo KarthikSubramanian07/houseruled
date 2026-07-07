@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { PlayingCard } from "./PlayingCard";
 import { Button } from "../Button";
 import { SUITS, SUIT_SYMBOL, RANK_LABEL, isRed, type Card, type Suit, type Rank } from "@/lib/engine/cards";
@@ -11,6 +11,8 @@ import { HowToPlay } from "./HowToPlay";
 import type { Action, GameView, PlayerPublic } from "@/lib/engine/types";
 
 const key = (c: Card) => (c.j ? "JK" : `${c.r}${c.s}`);
+// Games with bespoke control panels that render their own turn/waiting state.
+const CUSTOM_CONTROLS = new Set(["cheat", "gin", "casino", "cribbage", "fivehundred"]);
 function initials(name: string): string {
   return name.trim().split(/\s+/).slice(0, 2).map((p) => p[0]?.toUpperCase() ?? "").join("") || "?";
 }
@@ -38,8 +40,9 @@ export function GameTable({
 
   return (
     <div className="relative mx-auto flex w-full max-w-4xl flex-col gap-6">
-      {/* Quick rules reference — always one tap away. */}
-      <div className="absolute right-0 top-0 z-10">
+      {/* Quick rules reference — always one tap away, tucked top-right without
+          crowding the opponents row on narrow screens. */}
+      <div className="-mb-4 flex justify-end">
         <HowToPlay type={view.type} name={gameName} />
       </div>
 
@@ -58,9 +61,9 @@ export function GameTable({
         <Center view={view} onAction={onAction} />
       </div>
 
-      {/* Log ticker */}
+      {/* Log ticker — the game's play-by-play; the one bit of narration each turn. */}
       {view.log.length > 0 && (
-        <p className="text-center text-xs text-cream/45">{view.log[view.log.length - 1]}</p>
+        <p className="text-center text-xs text-cream/70">{view.log[view.log.length - 1]}</p>
       )}
 
       {/* Your hand + actions */}
@@ -81,9 +84,13 @@ export function GameTable({
             {view.hand.length > 0 && <Hand view={view} onAction={onAction} />}
           </>
         )}
-        <p className="text-xs text-cream/45">
-          {myTurn ? "Your move." : view.turn ? `Waiting on ${view.players.find((p) => p.id === view.turn)?.name ?? "…"}.` : ""}
-        </p>
+        {/* The custom-control games print their own turn state, so only the generic
+            hand/action path shows this line — no double "Waiting…". */}
+        {!CUSTOM_CONTROLS.has(view.type) && (
+          <p className="text-xs text-cream/55">
+            {myTurn ? "Your move." : view.turn ? `Waiting on ${view.players.find((p) => p.id === view.turn)?.name ?? "…"}.` : ""}
+          </p>
+        )}
       </div>
 
       {view.status.over && (
@@ -141,7 +148,7 @@ function RulesBar({
       )}
       {isHost && supportsAI && !view.status.over &&
         (adding ? (
-          <div className="flex items-center gap-2">
+          <div className="flex w-full max-w-sm flex-wrap items-center justify-center gap-2">
             <input
               value={text}
               onChange={(e) => setText(e.target.value)}
@@ -149,7 +156,7 @@ function RulesBar({
               autoFocus
               placeholder="e.g. tens skip the next player"
               maxLength={200}
-              className="felt-panel w-64 rounded-full px-3 py-1 text-xs text-cream placeholder:text-cream/30"
+              className="felt-panel min-w-0 flex-1 rounded-full px-3 py-1 text-xs text-cream placeholder:text-cream/30"
             />
             <button onClick={submit} className="text-xs text-brass hover:text-brass-bright">Add</button>
             <button onClick={() => setAdding(false)} className="text-xs text-cream/40">cancel</button>
@@ -169,11 +176,11 @@ function OpponentBadge({ p, type }: { p: PlayerPublic; type: string }) {
   const books = p.extra?.books as number | undefined;
   const result = p.extra?.result as string | undefined;
   return (
-    <div className={`flex w-28 flex-col items-center gap-1.5 rounded-xl px-2 py-2 ${p.isTurn ? "bg-brass/10 ring-1 ring-brass/50" : ""}`}>
+    <div className={`flex w-32 flex-col items-center gap-1.5 rounded-xl px-2 py-2 text-center ${p.isTurn ? "bg-brass/10 ring-1 ring-brass/50" : ""}`}>
       <div className={`grid h-11 w-11 place-items-center rounded-full bg-felt-dark text-sm font-semibold text-cream ring-2 ${p.isTurn ? "ring-brass-bright turn-pulse" : "ring-brass/50"} ${p.out ? "opacity-40" : ""}`}>
         {initials(p.name)}
       </div>
-      <span className="max-w-28 truncate text-xs font-medium text-cream">{p.name}</span>
+      <span className="max-w-32 truncate text-xs font-medium text-cream">{p.name}</span>
       {type === "blackjack" && bjCards ? (
         <div className="flex items-center gap-0.5">
           {bjCards.map((c, i) => <PlayingCard key={i} card={c} size="sm" />)}
@@ -184,7 +191,7 @@ function OpponentBadge({ p, type }: { p: PlayerPublic; type: string }) {
       {type === "blackjack" && p.extra?.total != null && (
         <span className="tabular text-xs text-brass">{String(p.extra.total)}{result ? ` · ${result}` : ""}</span>
       )}
-      {books != null && <span className="text-xs text-brass">{books} books</span>}
+      {books != null && <span className="tabular text-xs text-brass">{books} books</span>}
       {type === "hearts" && p.extra?.points != null && (
         <span className="tabular text-xs text-brass">{String(p.extra.points)} pts</span>
       )}
@@ -229,9 +236,32 @@ function OpponentBadge({ p, type }: { p: PlayerPublic; type: string }) {
   );
 }
 
+// The shared trick pile: the cards played this trick (with names) and a footer
+// line. Used identically by every trick-taking game's center.
+function TrickFan({ trick, emptyLabel, footer }: { trick: { card: Card; name: string }[]; emptyLabel: string; footer: ReactNode }) {
+  return (
+    <div className="flex flex-col items-center gap-3">
+      <div className="flex min-h-24 flex-wrap items-center justify-center gap-3">
+        {trick.length === 0 ? (
+          <span className="text-sm text-cream/45">{emptyLabel}</span>
+        ) : (
+          trick.map((p, i) => (
+            <div key={i} className="deal-in flex flex-col items-center gap-1">
+              <PlayingCard card={p.card} size="md" />
+              <span className="max-w-16 truncate text-xs text-cream/55">{p.name}</span>
+            </div>
+          ))
+        )}
+      </div>
+      <span className="text-xs text-cream/45">{footer}</span>
+    </div>
+  );
+}
+
 // ── Center dispatch ───────────────────────────────────────────────────────────
 function Center({ view, onAction }: { view: GameView; onAction: (a: Action) => void }) {
   const c = view.center;
+  const myTurn = view.turn === view.you;
   switch (view.type) {
     case "war": {
       const battle = c.battle as { a: Card; b: Card; war: boolean } | null;
@@ -324,7 +354,6 @@ function Center({ view, onAction }: { view: GameView; onAction: (a: Action) => v
       const trump = view.type === "spades";
       const broken = trump ? (c.spadesBroken as boolean) : (c.heartsBroken as boolean);
       const bidding = trump && c.phase === "bidding";
-      const myTurn = view.turn === view.you;
       if (bidding) {
         return (
           <div className="flex flex-col items-center gap-2 py-4">
@@ -334,31 +363,20 @@ function Center({ view, onAction }: { view: GameView; onAction: (a: Action) => v
         );
       }
       return (
-        <div className="flex flex-col items-center gap-3">
-          <div className="flex min-h-24 items-center justify-center gap-3">
-            {trick.length === 0 ? (
-              <span className="text-sm text-cream/45">{myTurn ? "Lead a card." : "Waiting…"}</span>
-            ) : (
-              trick.map((p, i) => (
-                <div key={i} className="deal-in flex flex-col items-center gap-1">
-                  <PlayingCard card={p.card} size="md" />
-                  <span className="max-w-16 truncate text-xs text-cream/55">{p.name}</span>
-                </div>
-              ))
-            )}
-          </div>
-          <span className="text-xs text-cream/45">
+        <TrickFan
+          trick={trick}
+          emptyLabel={myTurn ? "Lead a card." : "Waiting…"}
+          footer={<>
             Trick {(c.trickCount as number) + 1} / 13
             {trump ? " · ♠ trump" : ""}
             {broken ? "" : trump ? " · spades unbroken" : " · hearts unbroken"}
-          </span>
-        </div>
+          </>}
+        />
       );
     }
     case "ohhell": {
       const trick = (c.trick as { card: Card; name: string }[]) ?? [];
       const trump = c.trump as Suit;
-      const myTurn = view.turn === view.you;
       if (c.phase === "bidding") {
         return (
           <div className="flex flex-col items-center gap-2">
@@ -369,23 +387,11 @@ function Center({ view, onAction }: { view: GameView; onAction: (a: Action) => v
         );
       }
       return (
-        <div className="flex flex-col items-center gap-3">
-          <div className="flex min-h-24 items-center justify-center gap-3">
-            {trick.length === 0 ? (
-              <span className="text-sm text-cream/45">{myTurn ? "Lead a card." : "Waiting…"}</span>
-            ) : (
-              trick.map((p, i) => (
-                <div key={i} className="deal-in flex flex-col items-center gap-1">
-                  <PlayingCard card={p.card} size="md" />
-                  <span className="max-w-16 truncate text-xs text-cream/55">{p.name}</span>
-                </div>
-              ))
-            )}
-          </div>
-          <span className="text-xs text-cream/45">
-            Trump {SUIT_SYMBOL[trump]} · Trick {(c.trickCount as number) + 1} / {String(c.handSize)}
-          </span>
-        </div>
+        <TrickFan
+          trick={trick}
+          emptyLabel={myTurn ? "Lead a card." : "Waiting…"}
+          footer={<>Trump {SUIT_SYMBOL[trump]} · Trick {(c.trickCount as number) + 1} / {String(c.handSize)}</>}
+        />
       );
     }
     case "scopa": {
@@ -442,7 +448,6 @@ function Center({ view, onAction }: { view: GameView; onAction: (a: Action) => v
       const trump = c.trump as Suit | null;
       const phase = c.phase as string;
       const tw = (c.tricksWon as [number, number]) ?? [0, 0];
-      const myTurn = view.turn === view.you;
       if (phase === "bid1" || phase === "bid2") {
         return (
           <div className="flex flex-col items-center gap-2">
@@ -456,29 +461,16 @@ function Center({ view, onAction }: { view: GameView; onAction: (a: Action) => v
       }
       if (phase === "discard") return <p className="text-center text-sm text-cream/50">{String(c.dealerName)} is discarding…</p>;
       return (
-        <div className="flex flex-col items-center gap-3">
-          <div className="flex min-h-24 items-center justify-center gap-3">
-            {trick.length === 0 ? (
-              <span className="text-sm text-cream/45">{myTurn ? "Lead a card." : "Waiting…"}</span>
-            ) : (
-              trick.map((p, i) => (
-                <div key={i} className="deal-in flex flex-col items-center gap-1">
-                  <PlayingCard card={p.card} size="md" />
-                  <span className="max-w-16 truncate text-xs text-cream/55">{p.name}</span>
-                </div>
-              ))
-            )}
-          </div>
-          <span className="text-xs text-cream/45">
-            Trump {trump ? SUIT_SYMBOL[trump] : "?"} · Trick {(c.trickCount as number) + 1} / 5 · A {tw[0]} – B {tw[1]}
-          </span>
-        </div>
+        <TrickFan
+          trick={trick}
+          emptyLabel={myTurn ? "Lead a card." : "Waiting…"}
+          footer={<>Trump {trump ? SUIT_SYMBOL[trump] : "?"} · Trick {(c.trickCount as number) + 1} / 5 · A {tw[0]} – B {tw[1]}</>}
+        />
       );
     }
     case "pitch": {
       const trick = (c.trick as { card: Card; name: string }[]) ?? [];
       const trump = c.trump as Suit | null;
-      const myTurn = view.turn === view.you;
       if (c.phase === "bidding") {
         return (
           <div className="flex flex-col items-center gap-2 py-4">
@@ -491,25 +483,11 @@ function Center({ view, onAction }: { view: GameView; onAction: (a: Action) => v
         );
       }
       return (
-        <div className="flex flex-col items-center gap-3">
-          <div className="flex min-h-24 items-center justify-center gap-3">
-            {trick.length === 0 ? (
-              <span className="text-sm text-cream/45">
-                {myTurn ? (trump ? "Lead a card." : "Lead — the suit you play sets trump.") : "Waiting…"}
-              </span>
-            ) : (
-              trick.map((p, i) => (
-                <div key={i} className="deal-in flex flex-col items-center gap-1">
-                  <PlayingCard card={p.card} size="md" />
-                  <span className="max-w-16 truncate text-xs text-cream/55">{p.name}</span>
-                </div>
-              ))
-            )}
-          </div>
-          <span className="text-xs text-cream/45">
-            {trump ? `Trump ${SUIT_SYMBOL[trump]}` : "Trump not set"} · {String(c.pitcherName)} pitched {String(c.highBid)} · Trick {(c.trickCount as number) + 1} / 6
-          </span>
-        </div>
+        <TrickFan
+          trick={trick}
+          emptyLabel={myTurn ? (trump ? "Lead a card." : "Lead — the suit you play sets trump.") : "Waiting…"}
+          footer={<>{trump ? `Trump ${SUIT_SYMBOL[trump]}` : "Trump not set"} · {String(c.pitcherName)} pitched {String(c.highBid)} · Trick {(c.trickCount as number) + 1} / 6</>}
+        />
       );
     }
     case "casino": {
@@ -528,7 +506,6 @@ function Center({ view, onAction }: { view: GameView; onAction: (a: Action) => v
       const highBid = c.highBid as { tricks: number; label: string; name: string; value: number } | null;
       const tw = (c.tricksWon as [number, number]) ?? [0, 0];
       const ts = (c.teamScores as [number, number]) ?? [0, 0];
-      const myTurn = view.turn === view.you;
       if (c.phase === "bidding") {
         return (
           <div className="flex flex-col items-center gap-2 py-3">
@@ -549,23 +526,11 @@ function Center({ view, onAction }: { view: GameView; onAction: (a: Action) => v
         );
       }
       return (
-        <div className="flex flex-col items-center gap-3">
-          <div className="flex min-h-24 items-center justify-center gap-3">
-            {trick.length === 0 ? (
-              <span className="text-sm text-cream/45">{myTurn ? "Lead a card." : "Waiting…"}</span>
-            ) : (
-              trick.map((p, i) => (
-                <div key={i} className="deal-in flex flex-col items-center gap-1">
-                  <PlayingCard card={p.card} size="md" />
-                  <span className="max-w-16 truncate text-xs text-cream/55">{p.name}</span>
-                </div>
-              ))
-            )}
-          </div>
-          <span className="text-xs text-cream/45">
-            {contract?.tricks} {contract?.label} · Trick {(c.trickCount as number) + 1} / 10 · A {tw[0]} – B {tw[1]}
-          </span>
-        </div>
+        <TrickFan
+          trick={trick}
+          emptyLabel={myTurn ? "Lead a card." : "Waiting…"}
+          footer={<>{contract?.tricks} {contract?.label} · Trick {(c.trickCount as number) + 1} / 10 · A {tw[0]} – B {tw[1]}</>}
+        />
       );
     }
     case "cribbage": {
@@ -656,7 +621,7 @@ function Hand({ view, onAction }: { view: GameView; onAction: (a: Action) => voi
               <button
                 key={s}
                 onClick={() => { onAction({ type: "play", card: wild, suit: s }); setWild(null); }}
-                className={`grid h-11 w-11 place-items-center rounded-lg bg-cream text-2xl ${isRed(s) ? "text-ember" : "text-ink"} hover:ring-2 hover:ring-brass`}
+                className={`grid h-10 w-10 place-items-center rounded-lg bg-cream text-2xl transition-transform ${isRed(s) ? "text-ember" : "text-ink"} hover:-translate-y-0.5 hover:ring-2 hover:ring-brass`}
               >
                 {SUIT_SYMBOL[s]}
               </button>
@@ -719,7 +684,7 @@ function ActionBar({ view, onAction }: { view: GameView; onAction: (a: Action) =
               <button
                 key={s}
                 onClick={() => onAction({ type: "call", suit: s })}
-                className={`grid h-10 w-10 place-items-center rounded-lg bg-cream text-2xl ${isRed(s) ? "text-ember" : "text-ink"} hover:ring-2 hover:ring-brass`}
+                className={`grid h-10 w-10 place-items-center rounded-lg bg-cream text-2xl transition-transform ${isRed(s) ? "text-ember" : "text-ink"} hover:-translate-y-0.5 hover:ring-2 hover:ring-brass`}
               >
                 {SUIT_SYMBOL[s]}
               </button>
@@ -800,7 +765,7 @@ function GoFishAsk({ view, onAction }: { view: GameView; onAction: (a: Action) =
           <button
             key={t}
             onClick={() => { setTarget(t); setRank(null); }}
-            className={`rounded-full px-3 py-1 text-xs ${target === t ? "bg-brass text-felt-deep" : "felt-panel text-cream"}`}
+            className={`rounded-full px-3 py-1 text-xs transition-colors ${target === t ? "bg-brass text-felt-deep" : "felt-panel text-cream hover:border-brass/60"}`}
           >
             {view.players.find((p) => p.id === t)?.name ?? "Player"}
           </button>
@@ -811,7 +776,7 @@ function GoFishAsk({ view, onAction }: { view: GameView; onAction: (a: Action) =
           <button
             key={r}
             onClick={() => setRank(r)}
-            className={`tabular grid h-8 w-8 place-items-center rounded-lg text-sm ${rank === r ? "bg-brass text-felt-deep" : "bg-cream text-ink"}`}
+            className={`tabular grid h-8 w-8 place-items-center rounded-lg text-sm transition-transform hover:-translate-y-0.5 ${rank === r ? "bg-brass text-felt-deep" : "bg-cream text-ink"}`}
           >
             {RANK_LABEL[r]}
           </button>
@@ -1221,10 +1186,19 @@ function EndOverlay({
     const lines = won ? WIN_LINES : LOSE_LINES;
     return lines[Math.floor(Math.random() * lines.length)];
   });
+  const panelRef = useRef<HTMLDivElement>(null);
+  useEffect(() => { panelRef.current?.focus(); }, []);
   return (
     <div className="fixed inset-0 z-30 grid place-items-center bg-felt-deep/80 px-6 backdrop-blur-sm">
-      <div className="deal-in flex max-w-sm flex-col items-center gap-4 rounded-2xl border border-brass/40 bg-felt-dark p-8 text-center shadow-2xl">
-        <p className="font-display text-2xl text-brass">{won ? "🏆" : ""}</p>
+      <div
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Game over"
+        tabIndex={-1}
+        className="deal-in flex max-w-sm flex-col items-center gap-4 rounded-2xl border border-brass/40 bg-felt-dark p-8 text-center shadow-2xl outline-none"
+      >
+        {won && <p className="font-display text-2xl text-brass" aria-hidden>🏆</p>}
         <p className="font-display text-3xl leading-tight text-cream">{message}</p>
         <p className="-mt-1 text-sm italic text-cream/55">{flavor}</p>
         {isHost ? (

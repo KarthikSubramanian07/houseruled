@@ -223,6 +223,7 @@ export const gin: GameDefinition<GinState> = {
     if (action.type === "knock" || action.type === "gin") {
       const ginHand = meld.value === 0;
       if (action.type === "knock" && meld.value > 10) return { state, ok: false, error: "Deadwood too high to knock." };
+      if (action.type === "gin" && !ginHand) return { state, ok: false, error: "Not gin — you still have deadwood." };
       const opp = seat === 0 ? 1 : 0;
       const oppMeld = bestMelds(hands[opp]);
       let oppDw = oppMeld.value;

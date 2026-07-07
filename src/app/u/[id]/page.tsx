@@ -75,7 +75,7 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
       <SiteHeader />
       <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-5 pb-16 pt-4 sm:px-8">
         {profile === undefined ? (
-          <p className="text-center text-cream/50">Loading…</p>
+          <p className="text-center text-cream/50">Pulling their record…</p>
         ) : profile === null ? (
           <div className="flex flex-col items-center gap-4 py-16 text-center">
             <p className="font-display text-4xl text-brass">No profile yet</p>

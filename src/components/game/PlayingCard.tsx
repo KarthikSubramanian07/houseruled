@@ -1,4 +1,5 @@
-import { RANK_LABEL, SUIT_SYMBOL, isRed, type Card } from "@/lib/engine/cards";
+import type { KeyboardEvent } from "react";
+import { RANK_LABEL, SUIT_SYMBOL, SUIT_NAME, isRed, type Card } from "@/lib/engine/cards";
 
 type Size = "sm" | "md" | "lg";
 
@@ -41,13 +42,26 @@ export function PlayingCard({
       : "";
   const style = delay ? { animationDelay: `${delay}ms` } : undefined;
 
+  // Keyboard operability: a clickable card is a real button — reachable by Tab and
+  // activated with Enter/Space, so every game is playable without a mouse.
+  const a11y = onClick
+    ? {
+        role: "button" as const,
+        tabIndex: 0,
+        onKeyDown: (e: KeyboardEvent) => {
+          if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(); }
+        },
+      }
+    : {};
+
   if (faceDown || !card) {
     return (
       <div
         onClick={onClick}
         style={style}
         className={`card-back deal-in shadow-lg transition-transform ${base} ${interactive} ${lift} ${dim} ${ring}`}
-        aria-label="Face-down card"
+        aria-label={onClick ? "Draw a face-down card" : "Face-down card"}
+        {...a11y}
       />
     );
   }
@@ -57,9 +71,9 @@ export function PlayingCard({
       <div
         onClick={onClick}
         style={style}
-        role={onClick ? "button" : undefined}
         className={`deal-in flex flex-col items-center justify-center gap-1 bg-cream p-1.5 shadow-lg transition-transform ${base} ${interactive} ${lift} ${dim} ${ring} ${highlight ? "card-playable" : ""}`}
         aria-label="Joker"
+        {...a11y}
       >
         <span className="font-display text-xl leading-none text-brass">★</span>
         <span className="font-display text-[0.6em] uppercase tracking-widest text-ink/70">Joker</span>
@@ -72,9 +86,9 @@ export function PlayingCard({
     <div
       onClick={onClick}
       style={style}
-      role={onClick ? "button" : undefined}
       className={`deal-in flex flex-col justify-between bg-cream p-1.5 shadow-lg transition-transform ${base} ${interactive} ${lift} ${dim} ${ring} ${highlight ? "card-playable" : ""}`}
-      aria-label={`${RANK_LABEL[card.r]} of ${card.s}`}
+      aria-label={`${RANK_LABEL[card.r]} of ${SUIT_NAME[card.s]}`}
+      {...a11y}
     >
       <span className={`font-display font-semibold leading-none ${color}`}>
         {RANK_LABEL[card.r]}

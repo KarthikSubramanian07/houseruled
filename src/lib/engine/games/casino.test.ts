@@ -43,6 +43,14 @@ describe("casino", () => {
     expect(r.ok).toBe(false);
   });
 
+  it("rejects a capture that lists the same table card twice (no phantom cards)", () => {
+    let s = casino.init(seats, [], 8);
+    // One 5♦ on the table; a malicious client claims to capture it twice with a 10.
+    s = { ...s, turn: 0, table: [{ r: 5, s: "D" }], hands: [[{ r: 10, s: "S" }], s.hands[1]] };
+    const r = casino.apply(s, "a", { type: "capture", card: { r: 10, s: "S" }, targets: [{ r: 5, s: "D" }, { r: 5, s: "D" }] });
+    expect(r.ok).toBe(false);
+  });
+
   it("trails a card face-up when you don't capture", () => {
     let s = casino.init(seats, [], 6);
     const before = s.table.length;
