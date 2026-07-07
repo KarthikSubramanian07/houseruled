@@ -25,27 +25,28 @@ Houseruled is built in deliberate phases — each one playable before the next b
 | Phase | What | Status |
 | :---- | :--- | :----: |
 | 0 | Scaffolding — rooms, join-by-link, the felt table | ✅ |
-| 1 | The engine + built-in games (War → Blackjack, + Hearts & Spades) | ✅ |
+| 1 | The engine + 10 built-in games (shedding + trick-taking) | ✅ |
 | 2 | Toggle-based house rules (curated, pre-built) | ✅ |
 | 3 | Free-text AI house rules (*"queens reverse direction"*) | ✅ |
 | 4 | Whole games invented from a sentence | ✅ |
 | 5 | Community library, sharing, spectators, chat | ✅ |
 
-**Today you can:** spin up a table, share the code, and **play** — War, Go Fish,
-Old Maid, Crazy Eights, Blackjack, and the trick-taking pair **Hearts** and
-**Spades** — live over WebSockets. Toggle curated **house rules**, or just *type
-your own in plain English* and the AI turns it into a real rule. You can even
-**describe a whole game in a sentence** and play what it invents — then save it to
-the community library.
+**Today you can:** spin up a table, share the code, and **play** — **10 games** so
+far — live over WebSockets. Toggle curated **house rules**, or just *type your own
+in plain English* and the AI turns it into a real rule. You can even **describe a
+whole game in a sentence** and play what it invents — then save it to the community
+library.
 
-### The games (Phase 1)
+### The games
 
 Every game runs **server-authoritatively inside the room's Durable Object** — it
 owns the deck, validates every move, and sends each player only their own hand.
-War → Go Fish → Old Maid → Crazy Eights → Blackjack, in rising complexity, plus
-the trick-taking pair **Hearts** and **Spades** (follow-suit, trump, bidding,
-shoot-the-moon) on a shared trick core. The engine is pure, shared TypeScript with
-a big test suite (randomized playthroughs that conserve every card and terminate).
+
+- **Shedding / matching:** War, Go Fish, Old Maid, Crazy Eights, Blackjack, Cheat (Bluff)
+- **Trick-taking** (shared trick core — follow-suit, trump, bidding): Hearts, Spades, Euchre (partnerships + bowers), Oh Hell (exact bids)
+
+The engine is pure, shared TypeScript with a big test suite (80+ tests —
+randomized playthroughs that conserve every card and always terminate).
 
 ### House rules (Phase 2)
 
@@ -73,8 +74,9 @@ Save it to the **community library** and share a `/game/<slug>` link.
 
 A D1-backed community library (browse, most-played), shareable game links,
 live **table chat**, spectators (late joiners watch), and reconnect-safe rooms
-(state lives in the Durable Object). Optional accounts and more games (Euchre,
-Rummy, Cribbage, …) are the next things on deck.
+(state lives in the Durable Object). Optional accounts and more games (Gin Rummy,
+Cribbage, Scopa, real-time Speed/Egyptian Ratscrew, solo Solitaire, …) are the
+next things on deck.
 
 ## The free-forever table — all Cloudflare
 
