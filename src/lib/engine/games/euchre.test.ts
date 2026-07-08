@@ -53,7 +53,7 @@ describe("euchre", () => {
     s = euchre.apply(s, "a", { type: "pass" }).state;
     s = euchre.apply(s, "b", { type: "pass" }).state;
     s = euchre.apply(s, "c", { type: "pass" }).state;
-    // Dealer is stuck — only calls, no pass.
+    // Dealer is stuck - only calls, no pass.
     const dealerLegal = euchre.legalActions(s, "d");
     expect(dealerLegal.every((x) => x.type === "call")).toBe(true);
     expect(euchre.apply(s, "d", { type: "pass" }).ok).toBe(false);

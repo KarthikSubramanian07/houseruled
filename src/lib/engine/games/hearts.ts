@@ -1,4 +1,4 @@
-// Hearts — avoid taking hearts (1 pt each) and the Queen of Spades (13). Follow
+// Hearts - avoid taking hearts (1 pt each) and the Queen of Spades (13). Follow
 // suit; you can't lead hearts until they're "broken"; no points on the first
 // trick; shooting the moon (all 26) zeroes you and hits everyone else. Single
 // hand, lowest score wins.
@@ -48,7 +48,7 @@ function finalScores(taken: Card[][]): number[] {
 export const hearts: GameDefinition<HeartsState> = {
   type: "hearts",
   name: "Hearts",
-  blurb: "Dodge every heart and the Queen of Spades — or take them all and shoot the moon.",
+  blurb: "Dodge every heart and the Queen of Spades - or take them all and shoot the moon.",
   minPlayers: 4,
   maxPlayers: 4,
 
@@ -139,7 +139,7 @@ export const hearts: GameDefinition<HeartsState> = {
         scores = finalScores(taken);
         const min = Math.min(...scores);
         const winners = state.players.filter((_, i) => scores[i] === min).map((p) => p.name);
-        log = push(log, `Round over — ${winners.join(", ")} win${winners.length > 1 ? "" : "s"} with ${min}.`);
+        log = push(log, `Round over - ${winners.join(", ")} win${winners.length > 1 ? "" : "s"} with ${min}.`);
       }
       return { ok: true, state: { ...state, hands, trick: [], heartsBroken, taken, leader, turn, trickCount, over, scores, log } };
     }

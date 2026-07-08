@@ -20,7 +20,7 @@ interface LibGame {
 }
 
 // Invented games can only be built on these five bases (see lib/ai/gamegen.ts),
-// so the filter offers only these — the other games would be dead options.
+// so the filter offers only these - the other games would be dead options.
 const INVENTABLE_BASES = new Set(["war", "gofish", "oldmaid", "crazyeights", "blackjack"]);
 
 export default function GamesPage() {
@@ -97,7 +97,7 @@ export default function GamesPage() {
           <p className="text-center text-cream/50">Shuffling the deck…</p>
         ) : games.length === 0 ? (
           <div className="flex flex-col items-center gap-4 py-10 text-center">
-            <p className="text-cream/60">{search || base ? "Nothing matches — try a different search." : "No games yet — be the first to invent one."}</p>
+            <p className="text-cream/60">{search || base ? "Nothing matches - try a different search." : "No games yet - be the first to invent one."}</p>
             <ButtonLink href="/invent" size="lg">Invent a game</ButtonLink>
           </div>
         ) : (

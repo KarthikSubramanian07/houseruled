@@ -6,7 +6,7 @@ import { ADSENSE_CLIENT, ADSENSE_SLOT, isAdsenseConfigured, isAdSlotConfigured }
 
 // Google AdSense, kept deliberately quiet and off the felt. Everything is gated
 // on a real publisher id being present, so dev/demo/preview render nothing at all
-// — no empty gray boxes, no third-party script. Plug in NEXT_PUBLIC_ADSENSE_CLIENT
+// - no empty gray boxes, no third-party script. Plug in NEXT_PUBLIC_ADSENSE_CLIENT
 // (and _SLOT) to switch it on. See README → "Ads & support".
 
 declare global {
@@ -40,7 +40,7 @@ export function AdSlot({ className = "" }: { className?: string }) {
     try {
       (window.adsbygoogle = window.adsbygoogle || []).push({});
     } catch {
-      // AdSense not ready / blocked — leave the reserved space empty.
+      // AdSense not ready / blocked - leave the reserved space empty.
     }
   }, []);
 

@@ -1,4 +1,4 @@
--- Profiles + favorites (Phase 5). Identity is the player's id — the anonymous
+-- Profiles + favorites (Phase 5). Identity is the player's id - the anonymous
 -- localStorage id today, upgradeable to a Google-auth'd id later without schema
 -- change (same `users.id`). Profiles are public and queryable by id.
 

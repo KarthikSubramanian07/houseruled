@@ -30,7 +30,7 @@
   "d1_databases": [{ "binding": "DB", "database_name": "houseruled", "database_id": "f8cd8824-e474-4e1a-bc96-1039aa6e8707" }],
   "migrations_dir": "migrations",
   // GROQ_API_KEY is a Worker secret (wrangler secret put), never committed.
-  // D1 (community library + accounts) lands in Phase 4/5 — the schema is ready in
+  // D1 (community library + accounts) lands in Phase 4/5 - the schema is ready in
   // migrations/, and the binding is added here once the DB is created:
   //   "d1_databases": [{ "binding": "DB", "database_name": "houseruled", "database_id": "<id>" }]
   "observability": {

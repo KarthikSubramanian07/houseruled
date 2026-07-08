@@ -71,7 +71,7 @@ export function joinRoomChannel(opts: JoinOptions): RoomChannel {
     onPlayers([{ ...player, isHost: true, isSelf: true, joinedAt: Date.now() }]);
     onGame(null);
     return {
-      startGame: () => onError?.("Games run on the live backend — deploy or run `wrangler dev`."),
+      startGame: () => onError?.("Games run on the live backend - deploy or run `wrangler dev`."),
       sendAction: () => {},
       proposeRule: () => onError?.("Custom rules need the live backend."),
       sendChat: () => {},

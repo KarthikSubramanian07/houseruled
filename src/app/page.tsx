@@ -58,7 +58,7 @@ export default function Home() {
 
           {!live && (
             <p className="mt-2 w-full max-w-md text-xs leading-relaxed text-cream/40">
-              Running in <span className="text-cream/60">table-demo mode</span> —
+              Running in <span className="text-cream/60">table-demo mode</span> -
               this is a local <code className="text-cream/60">next dev</code>{" "}
               build. Deploy to Cloudflare (or run{" "}
               <code className="text-cream/60">wrangler dev</code>) for live,
@@ -69,7 +69,7 @@ export default function Home() {
       </main>
 
       {/* One quiet ad slot, well below the fold. Renders nothing unless AdSense
-          is configured — so it never shows an empty box in dev or demo mode. */}
+          is configured - so it never shows an empty box in dev or demo mode. */}
       <div className="px-5 sm:px-8">
         <AdSlot className="mb-8" />
       </div>

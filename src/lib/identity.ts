@@ -1,5 +1,5 @@
 // Anonymous, account-free identity. A player is a random id + a display name kept
-// in localStorage. This is the "no account required" backbone of Phase 0 — the
+// in localStorage. This is the "no account required" backbone of Phase 0 - the
 // same id is reused across rooms so presence/host checks are stable, and it's the
 // value we'll optionally link to a real account in Phase 5.
 
@@ -20,12 +20,12 @@ function makeId(): string {
 /** Read (or lazily create) this browser's player identity. Client-only. */
 export function getPlayer(): Player {
   if (typeof window === "undefined") {
-    // SSR guard — never persisted; real identity is resolved on the client.
+    // SSR guard - never persisted; real identity is resolved on the client.
     return { id: "ssr", name: "Player" };
   }
 
   // Storage can be disabled/blocked (locked-down Safari, private embeds, quota).
-  // Never let that crash the table — fall back to an in-memory identity.
+  // Never let that crash the table - fall back to an in-memory identity.
   let store: Storage | null = null;
   try {
     store = window.localStorage;
@@ -44,7 +44,7 @@ export function getPlayer(): Player {
     try {
       store?.setItem(key, value);
     } catch {
-      // Ignore — identity just won't persist across reloads this session.
+      // Ignore - identity just won't persist across reloads this session.
     }
   };
 
@@ -92,7 +92,7 @@ export function setPlayerName(name: string): string {
     try {
       window.localStorage.setItem(NAME_KEY, finalName);
     } catch {
-      // Ignore — won't persist, but the session still uses it.
+      // Ignore - won't persist, but the session still uses it.
     }
   }
   return finalName;

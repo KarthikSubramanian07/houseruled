@@ -1,4 +1,4 @@
-// Crazy Eights — match suit or rank, 8s are wild. The showcase for Phase 2 house
+// Crazy Eights - match suit or rank, 8s are wild. The showcase for Phase 2 house
 // rules: 2s draw two / skip, Queens skip / reverse, Jacks skip, Aces reverse,
 // stacking draws, and draw-until-playable. All effects are gated on active rules.
 
@@ -57,7 +57,7 @@ function endOrPass(
     const w = blockedWinner(next.hands);
     return {
       ok: true,
-      state: { ...next, passStreak: streak, over: true, winner: w, log: push(log, `Table blocked — ${prev.players[w].name} wins with the fewest cards.`) },
+      state: { ...next, passStreak: streak, over: true, winner: w, log: push(log, `Table blocked - ${prev.players[w].name} wins with the fewest cards.`) },
     };
   }
   return { ok: true, state: { ...next, passStreak: streak, turn: nextTurn, log } };
@@ -182,7 +182,7 @@ export const crazyeights: GameDefinition<CE8State> = {
       return actions;
     }
 
-    // Just drew a card — decide play-or-pass (or keep drawing).
+    // Just drew a card - decide play-or-pass (or keep drawing).
     if (state.justDrew) {
       const playable = isPlayable(state.justDrew, state.currentSuit, top.r);
       if (state.rules.includes("ce8-draw-until-play")) {
@@ -266,7 +266,7 @@ export const crazyeights: GameDefinition<CE8State> = {
       log = push(log, `${state.players[seat].name} played ${card.r}${card.s}${wild ? ` → ${declared}` : ""}.`);
 
       if (hands[seat].length === 0) {
-        log = push(log, `${state.players[seat].name} is out — game over!`);
+        log = push(log, `${state.players[seat].name} is out - game over!`);
         return {
           ok: true,
           state: { ...state, hands, draw, discard, currentSuit, dir, plays, mustDraw: 0, justDrew: null, over: true, winner: seat, log },
@@ -287,12 +287,12 @@ export const crazyeights: GameDefinition<CE8State> = {
         log = push(log, `${state.players[seat].name} draws ${r.drawn.length} and forfeits the turn.`);
         return { ok: true, state: { ...state, hands, draw, discard, shuffles, mustDraw: 0, justDrew: null, passStreak: 0, turn: advance(0), log } };
       }
-      // Normal single draw — stay on turn to decide play/pass.
+      // Normal single draw - stay on turn to decide play/pass.
       const r = drawFrom(draw, discard, state.seed, shuffles, 1);
       draw = r.draw; discard = r.discard; shuffles = r.shuffles;
       if (r.drawn.length === 0) {
-        // Nothing to draw and nothing to play — a no-progress pass.
-        return endOrPass(state, { ...state, draw, discard, shuffles, justDrew: null }, seat, advance(0), push(log, `${state.players[seat].name} can't move — pass.`));
+        // Nothing to draw and nothing to play - a no-progress pass.
+        return endOrPass(state, { ...state, draw, discard, shuffles, justDrew: null }, seat, advance(0), push(log, `${state.players[seat].name} can't move - pass.`));
       }
       hands[seat] = hands[seat].concat(r.drawn);
       justDrew = r.drawn[0];

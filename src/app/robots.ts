@@ -6,7 +6,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: "*",
       allow: "/",
-      // Room lobbies are private and ephemeral — never index them.
+      // Room lobbies are private and ephemeral - never index them.
       disallow: "/room/",
     },
     sitemap: `${SITE_URL}/sitemap.xml`,

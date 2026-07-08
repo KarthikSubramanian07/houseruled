@@ -9,7 +9,7 @@ const SIZES: Record<Size, string> = {
   lg: "h-28 w-20 text-2xl",
 };
 
-/** A single playing card — cream face with ink/ember pips, or the ember card back. */
+/** A single playing card - cream face with ink/ember pips, or the ember card back. */
 export function PlayingCard({
   card,
   faceDown = false,
@@ -42,7 +42,7 @@ export function PlayingCard({
       : "";
   const style = delay ? { animationDelay: `${delay}ms` } : undefined;
 
-  // Keyboard operability: a clickable card is a real button — reachable by Tab and
+  // Keyboard operability: a clickable card is a real button - reachable by Tab and
   // activated with Enter/Space, so every game is playable without a mouse.
   const a11y = onClick
     ? {

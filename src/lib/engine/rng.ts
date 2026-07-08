@@ -1,6 +1,6 @@
 // Deterministic, seedable PRNG (mulberry32). The Durable Object seeds it from a
 // crypto-random seed stored in game state, so shuffles are server-controlled and
-// reproducible for tests. Never use Math.random for gameplay — it can't be
+// reproducible for tests. Never use Math.random for gameplay - it can't be
 // replayed and isn't available deterministically in the Workers runtime.
 
 export type RNG = () => number; // returns a float in [0, 1)

@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 
-// Web App Manifest — makes Houseruled installable to an iOS/Android home screen
+// Web App Manifest - makes Houseruled installable to an iOS/Android home screen
 // as a standalone, full-screen app (no browser chrome). This is the free,
 // zero-store-fee path to "an app"; a native Capacitor shell can wrap the same
 // build later (see README → Native apps).

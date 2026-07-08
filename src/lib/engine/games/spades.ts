@@ -1,4 +1,4 @@
-// Spades — bid the tricks you'll take, then play. Spades are always trump; you
+// Spades - bid the tricks you'll take, then play. Spades are always trump; you
 // can't lead them until "broken". Individual scoring: make your bid for 10×bid
 // (+1 per overtrick "bag"), miss it for −10×bid; nil is ±100. Single hand, high
 // score wins.
@@ -105,7 +105,7 @@ export const spades: GameDefinition<SpadesState> = {
       let log = push(state.log, `${state.players[seat].name} bids ${n === 0 ? "nil" : n}.`);
       const nextBidder = state.bidTurn + 1;
       if (nextBidder >= 4) {
-        log = push(log, "Bidding done — lead off.");
+        log = push(log, "Bidding done - lead off.");
         return { ok: true, state: { ...state, bids, phase: "playing", turn: state.leader, log } };
       }
       return { ok: true, state: { ...state, bids, bidTurn: nextBidder, log } };
@@ -144,7 +144,7 @@ export const spades: GameDefinition<SpadesState> = {
         scores = state.players.map((_, i) => score(state.bids[i] ?? 0, tricksWon[i]));
         const max = Math.max(...scores);
         const w = state.players.filter((_, i) => scores[i] === max).map((p) => p.name);
-        log = push(log, `Hand over — ${w.join(", ")} win${w.length > 1 ? "" : "s"}.`);
+        log = push(log, `Hand over - ${w.join(", ")} win${w.length > 1 ? "" : "s"}.`);
       }
       return { ok: true, state: { ...state, hands, trick: [], spadesBroken, tricksWon, leader, turn, trickCount, over, scores, log } };
     }

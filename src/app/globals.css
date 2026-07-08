@@ -3,12 +3,12 @@
 /* ─────────────────────────────────────────────────────────────────────────────
    Houseruled design tokens
    The felt is the interface. Personality comes from a deep, saturated green
-   surface with brass/gold accents — not from UI chrome. Everything that isn't
+   surface with brass/gold accents - not from UI chrome. Everything that isn't
    the felt or the house-rules plaque should be quiet and get out of the way.
    ───────────────────────────────────────────────────────────────────────── */
 @theme {
   /* Palette */
-  --color-felt: #0f3d2e; /* deep forest-green felt — the dominant surface */
+  --color-felt: #0f3d2e; /* deep forest-green felt - the dominant surface */
   --color-felt-dark: #0a2a1f; /* darker felt for shadow/depth, panels */
   --color-felt-deep: #072018; /* deepest, for the vignette floor */
   --color-cream: #f2ecdd; /* card face + primary text on dark surfaces */
@@ -16,7 +16,7 @@
   --color-brass-bright: #e2bd68; /* brass highlight / hover */
   --color-brass-dim: #93752f; /* brass shadow / pressed edge */
   --color-ink: #1a1a1a; /* card pip/text, dark body text */
-  --color-ember: #c1502e; /* SPARING — destructive / contested-rule alerts */
+  --color-ember: #c1502e; /* SPARING - destructive / contested-rule alerts */
   --color-parchment: #e8dfc8; /* aged paper for the plaque face */
 
   /* Type families (wired to next/font vars in layout.tsx) */
@@ -24,7 +24,7 @@
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-mono: ui-monospace, "SF Mono", "SFMono-Regular", Menlo, Consolas, monospace;
 
-  /* Fluid display scale — used only for game titles, room codes, hero */
+  /* Fluid display scale - used only for game titles, room codes, hero */
   --text-hero: clamp(2.75rem, 7vw, 5.5rem);
   --text-title: clamp(2rem, 4vw, 3rem);
 
@@ -62,7 +62,7 @@ body {
   overflow-x: hidden;
 }
 
-/* Faint woven-felt texture. Kept extremely subtle — it should read as "surface,"
+/* Faint woven-felt texture. Kept extremely subtle - it should read as "surface,"
    never as "pattern." Layered as a fixed overlay so it doesn't scroll. */
 body::before {
   content: "";
@@ -108,7 +108,7 @@ body::before {
 
 /* ─────────────────────────────────────────────────────────────────────────────
    The signature element: the house-rules plaque.
-   A small brass-trimmed scorecard pinned to the felt — not a generic drawer.
+   A small brass-trimmed scorecard pinned to the felt - not a generic drawer.
    This is the one place we spend visual budget.
    ───────────────────────────────────────────────────────────────────────── */
 .plaque {
@@ -173,7 +173,7 @@ body::before {
   filter: brightness(0.97);
 }
 
-/* Quiet outline button — brass hairline on felt, gets out of the way. */
+/* Quiet outline button - brass hairline on felt, gets out of the way. */
 .btn-quiet {
   border: 1px solid color-mix(in oklab, var(--color-brass) 55%, transparent);
   color: var(--color-cream);
@@ -186,7 +186,7 @@ body::before {
   border-color: var(--color-brass);
 }
 
-/* A quiet felt panel (inputs, seats) — darker felt, hairline brass edge. */
+/* A quiet felt panel (inputs, seats) - darker felt, hairline brass edge. */
 .felt-panel {
   background: color-mix(in oklab, var(--color-felt-dark) 82%, black 18%);
   border: 1px solid color-mix(in oklab, var(--color-brass) 22%, transparent);
@@ -222,7 +222,7 @@ body::before {
   animation: deal-in 260ms var(--ease-card) both;
 }
 
-/* A quiet brass pulse on the active player's seat — signals turn without shouting. */
+/* A quiet brass pulse on the active player's seat - signals turn without shouting. */
 @keyframes turn-pulse {
   0%,
   100% {

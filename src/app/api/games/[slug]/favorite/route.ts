@@ -3,7 +3,7 @@ import { toggleFavorite, authorizeWrite, type LibraryEnv } from "@/lib/library";
 
 export const dynamic = "force-dynamic";
 
-// POST { userId, secret } → { ok, favorited } — toggles this user's favorite.
+// POST { userId, secret } → { ok, favorited } - toggles this user's favorite.
 export async function POST(request: Request, ctx: { params: Promise<{ slug: string }> }): Promise<Response> {
   const { slug } = await ctx.params;
   let body: { userId?: unknown; secret?: unknown };

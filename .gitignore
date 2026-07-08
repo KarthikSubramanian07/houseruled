@@ -18,7 +18,7 @@ next-env.d.ts
 # production
 /build
 
-# local env — never commit real keys
+# local env - never commit real keys
 .env
 .env*.local
 .dev.vars

@@ -1,4 +1,4 @@
-// Oh Hell — bid the EXACT number of tricks you'll take. Make it exactly for
+// Oh Hell - bid the EXACT number of tricks you'll take. Make it exactly for
 // 10 + your bid; miss by any amount and you lose points. A turned card sets
 // trump; the dealer's bid is constrained so the bids can't sum to the hand size
 // ("screw the dealer"). Single hand of 8 tricks.
@@ -40,7 +40,7 @@ const SUIT: Record<Suit, string> = { S: "♠", H: "♥", D: "♦", C: "♣" };
 export const ohhell: GameDefinition<OhHellState> = {
   type: "ohhell",
   name: "Oh Hell",
-  blurb: "Bid the exact tricks you'll take — no more, no less. Trump is turned each hand.",
+  blurb: "Bid the exact tricks you'll take - no more, no less. Trump is turned each hand.",
   minPlayers: 3,
   maxPlayers: 6,
 
@@ -117,7 +117,7 @@ export const ohhell: GameDefinition<OhHellState> = {
       bids[seat] = n;
       let log = push(state.log, `${state.players[seat].name} bids ${n}.`);
       if (state.bidTurn + 1 >= state.players.length) {
-        log = push(log, "Bids in — lead off.");
+        log = push(log, "Bids in - lead off.");
         return { ok: true, state: { ...state, bids, phase: "playing", turn: state.leader, log } };
       }
       return { ok: true, state: { ...state, bids, bidTurn: state.bidTurn + 1, log } };
@@ -151,7 +151,7 @@ export const ohhell: GameDefinition<OhHellState> = {
         const scores = state.players.map((_, i) => (tricksWon[i] === (state.bids[i] ?? 0) ? 10 + tricksWon[i] : -Math.abs(tricksWon[i] - (state.bids[i] ?? 0))));
         const max = Math.max(...scores);
         const w = state.players.filter((_, i) => scores[i] === max).map((p) => p.name);
-        return { ok: true, state: { ...state, hands, trick: [], trumpBroken, tricksWon, trickCount, over: true, scores, log: push(log, `Hand over — ${w.join(", ")} win${w.length > 1 ? "" : "s"}.`) } };
+        return { ok: true, state: { ...state, hands, trick: [], trumpBroken, tricksWon, trickCount, over: true, scores, log: push(log, `Hand over - ${w.join(", ")} win${w.length > 1 ? "" : "s"}.`) } };
       }
       return { ok: true, state: { ...state, hands, trick: [], trumpBroken, tricksWon, leader, turn, trickCount, log } };
     }

@@ -1,4 +1,4 @@
-// Old Maid — one Queen removed so a single card can never pair. Draw blind from a
+// Old Maid - one Queen removed so a single card can never pair. Draw blind from a
 // neighbor, discard pairs; whoever is left holding the odd Queen is the Old Maid.
 
 import { standardDeck, type Card, type Rank, shuffle } from "../cards";
@@ -130,7 +130,7 @@ export const oldmaid: GameDefinition<OldMaidState> = {
       over = true;
       loser = hands.findIndex((h) => h.length > 0);
       if (loser >= 0) log = push(log, `${state.players[loser].name} is the Old Maid!`);
-      else log = push(log, "Everyone paired off — a rare clean sweep!");
+      else log = push(log, "Everyone paired off - a rare clean sweep!");
     }
 
     const dir = dirOf(state.rules);

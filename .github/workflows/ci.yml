@@ -42,7 +42,7 @@ jobs:
   deploy:
     name: Deploy to Cloudflare
     needs: quality
-    # Only deploy real pushes to main — never PRs or forks.
+    # Only deploy real pushes to main - never PRs or forks.
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     steps:

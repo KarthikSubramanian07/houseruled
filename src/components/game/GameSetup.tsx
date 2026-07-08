@@ -143,7 +143,7 @@ export function GameSetup({
       {/* House rules */}
       {game && gameRules.length > 0 && (
         <div className="felt-panel rounded-xl p-4">
-          <h3 className="plaque-header mb-3 text-xs text-brass">House Rules — optional</h3>
+          <h3 className="plaque-header mb-3 text-xs text-brass">House Rules - optional</h3>
           <div className="flex flex-col gap-1.5">
             {gameRules.map((r) => {
               const on = rules.has(r.id);
@@ -185,10 +185,10 @@ export function GameSetup({
         </div>
       )}
 
-      {/* Free-text (AI) house rules — Phase 3 */}
+      {/* Free-text (AI) house rules - Phase 3 */}
       {game && supportsAIRules(game) && (
         <div className="felt-panel rounded-xl p-4">
-          <h3 className="plaque-header mb-1 text-xs text-brass">Write your own rule — in plain English</h3>
+          <h3 className="plaque-header mb-1 text-xs text-brass">Write your own rule - in plain English</h3>
           <p className="mb-3 text-xs text-cream/45">
             e.g. “twos are wild”, “queens reverse”, “playing a 7 lets you go again”. The AI turns it into a real rule.
           </p>
