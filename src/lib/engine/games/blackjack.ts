@@ -28,7 +28,7 @@ function push(log: string[], line: string): string[] {
 }
 const isBlackjack = (h: Card[]) => h.length === 2 && handTotal(h).total === 21;
 
-/** Play the dealer out and score every hand — produces the final over-state. */
+/** Play the dealer out and score every hand - produces the final over-state. */
 function settle(s: BJState): BJState {
   const dealerHitsSoft17 = s.rules.includes("bj-dealer-hits-soft-17");
   const dealer = s.dealer.slice();
@@ -94,7 +94,7 @@ export const blackjack: GameDefinition<BJState> = {
       phase: "players",
       log: ["Cards dealt. Hit or stand."],
     };
-    // Everyone was dealt a natural — go straight to the dealer.
+    // Everyone was dealt a natural - go straight to the dealer.
     return firstTurn < 0 ? settle(base) : base;
   },
 

@@ -5,7 +5,7 @@ function initials(name: string): string {
   return parts.map((p) => p[0]?.toUpperCase() ?? "").join("") || "?";
 }
 
-/** A seat around the table — a filled seat for a present player, or an empty one. */
+/** A seat around the table - a filled seat for a present player, or an empty one. */
 export function PlayerSeat({ player }: { player: SeatedPlayer | null }) {
   if (!player) {
     return (

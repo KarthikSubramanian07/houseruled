@@ -1,7 +1,7 @@
-// Cribbage (2 players) — the classic 121-point race. Deal 6, discard 2 to the
+// Cribbage (2 players) - the classic 121-point race. Deal 6, discard 2 to the
 // dealer's crib, cut a starter, then peg through "the play" (15s, pairs, runs,
 // 31, go) before scoring "the show" (15s, pairs, runs, flush, nobs) for each
-// hand and the crib. First to 121 wins — pone counts before the dealer, so the
+// hand and the crib. First to 121 wins - pone counts before the dealer, so the
 // last few points are a genuine race.
 
 import { standardDeck, shuffle, type Card, type Rank } from "../cards";
@@ -126,7 +126,7 @@ function dealHands(s: CribState, dealer: number): CribState {
     goBy: null,
     turn: other(dealer),
     lastPlayer: other(dealer),
-    log: push(s.log, `Deal ${s.deal + 1} — ${s.players[dealer].name} deals. Each discards 2 to the crib.`),
+    log: push(s.log, `Deal ${s.deal + 1} - ${s.players[dealer].name} deals. Each discards 2 to the crib.`),
   };
 }
 
@@ -135,9 +135,9 @@ function award(s: CribState, seat: number, pts: number, label: string): CribStat
   if (pts <= 0) return s;
   const scores: [number, number] = [s.scores[0], s.scores[1]];
   scores[seat] += pts;
-  const log = push(s.log, `${s.players[seat].name} +${pts} — ${label}.`);
+  const log = push(s.log, `${s.players[seat].name} +${pts} - ${label}.`);
   if (scores[seat] >= WIN) {
-    return { ...s, scores: [Math.min(scores[0], WIN), Math.min(scores[1], WIN)] as [number, number], over: true, phase: "over", winner: seat, log: push(log, `${s.players[seat].name} reaches 121 — game!`) };
+    return { ...s, scores: [Math.min(scores[0], WIN), Math.min(scores[1], WIN)] as [number, number], over: true, phase: "over", winner: seat, log: push(log, `${s.players[seat].name} reaches 121 - game!`) };
   }
   return { ...s, scores, log };
 }
@@ -166,7 +166,7 @@ function autoGo(s: CribState): CribState {
   for (let guard = 0; guard < 40; guard++) {
     const t = st.turn;
     const playable = st.hands[t].some((c) => cnt(c.r) + st.count <= 31);
-    if (playable) return st; // this player has a legal card — wait for them
+    if (playable) return st; // this player has a legal card - wait for them
     // Forced go.
     if (st.goBy !== null && st.goBy !== t) {
       st = award(st, st.lastPlayer, 1, "go");

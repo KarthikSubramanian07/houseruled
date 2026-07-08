@@ -1,4 +1,4 @@
-// Phase 4 — invent a game from a sentence. The model designs a custom game as a
+// Phase 4 - invent a game from a sentence. The model designs a custom game as a
 // variant of one of the five base games plus a set of plain-English house rules
 // (which then flow through the Phase 3 parser). Server only.
 
@@ -32,9 +32,9 @@ Output EXACTLY one JSON object:
 If it can't be built from these, output: { "unsupported": true, "reason": "<short reason>" }
 
 Examples:
-"get rid of all your cards, but eights let you change the suit" -> {"name":"Wild Eights","baseGame":"crazyeights","ruleTexts":["eights are wild"],"explanation":"Standard Crazy Eights — empty your hand first; eights are wild and change the suit."}
+"get rid of all your cards, but eights let you change the suit" -> {"name":"Wild Eights","baseGame":"crazyeights","ruleTexts":["eights are wild"],"explanation":"Standard Crazy Eights - empty your hand first; eights are wild and change the suit."}
 "a fast game where twos attack and queens turn the tables" -> {"name":"Counterclockwise","baseGame":"crazyeights","ruleTexts":["twos make the next player draw two","queens reverse direction"],"explanation":"Crazy Eights with bite: a 2 stings the next player, a queen flips the direction."}
-"closest to twenty-one wins" -> {"name":"House 21","baseGame":"blackjack","ruleTexts":[],"explanation":"Classic Blackjack against the dealer — get close to 21 without busting."}`;
+"closest to twenty-one wins" -> {"name":"House 21","baseGame":"blackjack","ruleTexts":[],"explanation":"Classic Blackjack against the dealer - get close to 21 without busting."}`;
 
 export async function generateGame(description: string, env: AIEnv): Promise<GenResult> {
   if (!env.GROQ_API_KEY) return { ok: false, error: "AI isn't configured on this server." };
@@ -59,7 +59,7 @@ export async function generateGame(description: string, env: AIEnv): Promise<Gen
       }),
     });
   } catch {
-    return { ok: false, error: "Couldn't reach the game designer — try again." };
+    return { ok: false, error: "Couldn't reach the game designer - try again." };
   }
   if (!res.ok) return { ok: false, error: `Game designer error (${res.status}).` };
 

@@ -24,7 +24,7 @@ export async function POST(request: Request): Promise<Response> {
     /* not in the Cloudflare runtime (e.g. next dev) */
   }
 
-  // Cached by normalized text, but unique inputs still hit Groq — throttle per IP.
+  // Cached by normalized text, but unique inputs still hit Groq - throttle per IP.
   const rl = await rateLimit(env.RULE_CACHE, "parse", clientIp(request), 20, 60, 2000);
   if (!rl.ok) return tooMany(rl.retryAfter);
 

@@ -40,7 +40,7 @@ export function GameTable({
 
   return (
     <div className="relative mx-auto flex w-full max-w-4xl flex-col gap-6">
-      {/* Quick rules reference — always one tap away, tucked top-right without
+      {/* Quick rules reference - always one tap away, tucked top-right without
           crowding the opponents row on narrow screens. */}
       <div className="-mb-4 flex justify-end">
         <HowToPlay type={view.type} name={gameName} />
@@ -53,15 +53,15 @@ export function GameTable({
         ))}
       </div>
 
-      {/* Active house rules — always visible, the signature idea. */}
+      {/* Active house rules - always visible, the signature idea. */}
       <RulesBar view={view} isHost={isHost} onProposeRule={onProposeRule} />
 
-      {/* Center — game-specific */}
+      {/* Center - game-specific */}
       <div className="min-h-40 rounded-2xl border border-brass/15 bg-felt-dark/30 px-4 py-6">
         <Center view={view} onAction={onAction} />
       </div>
 
-      {/* Log ticker — the game's play-by-play; the one bit of narration each turn. */}
+      {/* Log ticker - the game's play-by-play; the one bit of narration each turn. */}
       {view.log.length > 0 && (
         <p className="text-center text-xs text-cream/70">{view.log[view.log.length - 1]}</p>
       )}
@@ -85,7 +85,7 @@ export function GameTable({
           </>
         )}
         {/* The custom-control games print their own turn state, so only the generic
-            hand/action path shows this line — no double "Waiting…". */}
+            hand/action path shows this line - no double "Waiting…". */}
         {!CUSTOM_CONTROLS.has(view.type) && (
           <p className="text-xs text-cream/55">
             {myTurn ? "Your move." : view.turn ? `Waiting on ${view.players.find((p) => p.id === view.turn)?.name ?? "…"}.` : ""}
@@ -485,7 +485,7 @@ function Center({ view, onAction }: { view: GameView; onAction: (a: Action) => v
       return (
         <TrickFan
           trick={trick}
-          emptyLabel={myTurn ? (trump ? "Lead a card." : "Lead — the suit you play sets trump.") : "Waiting…"}
+          emptyLabel={myTurn ? (trump ? "Lead a card." : "Lead - the suit you play sets trump.") : "Waiting…"}
           footer={<>{trump ? `Trump ${SUIT_SYMBOL[trump]}` : "Trump not set"} · {String(c.pitcherName)} pitched {String(c.highBid)} · Trick {(c.trickCount as number) + 1} / 6</>}
         />
       );
@@ -511,7 +511,7 @@ function Center({ view, onAction }: { view: GameView; onAction: (a: Action) => v
           <div className="flex flex-col items-center gap-2 py-3">
             <span className="font-display text-xl text-cream/80">Bidding</span>
             <span className="text-xs text-cream/55">
-              {highBid ? `${highBid.name} holds ${highBid.tricks} ${highBid.label} (${highBid.value})` : "No bids yet — open the auction."}
+              {highBid ? `${highBid.name} holds ${highBid.tricks} ${highBid.label} (${highBid.value})` : "No bids yet - open the auction."}
             </span>
             <span className="tabular text-[11px] text-brass/70">Team A {ts[0]} · Team B {ts[1]}</span>
           </div>
@@ -521,7 +521,7 @@ function Center({ view, onAction }: { view: GameView; onAction: (a: Action) => v
         return (
           <div className="flex flex-col items-center gap-2 py-4">
             <span className="font-display text-xl text-cream/80">{contract?.tricks} {contract?.label}</span>
-            <span className="text-xs text-cream/55">{c.kittyPickup ? "Take the kitty — discard 3." : `${String(c.declarerName)} is exchanging the kitty…`}</span>
+            <span className="text-xs text-cream/55">{c.kittyPickup ? "Take the kitty - discard 3." : `${String(c.declarerName)} is exchanging the kitty…`}</span>
           </div>
         );
       }
@@ -870,7 +870,7 @@ function GinControls({ view, onAction }: { view: GameView; onAction: (a: Action)
       {phase === "discard" && myTurn && (
         <span className="text-xs text-cream/50">
           Deadwood: <span className={deadwood <= 10 ? "text-brass" : "text-cream/70"}>{deadwood}</span>
-          {deadwood <= 10 && " — you can knock"}
+          {deadwood <= 10 && " - you can knock"}
         </span>
       )}
       <div className="flex flex-wrap items-end justify-center gap-1.5">
@@ -935,7 +935,7 @@ function CasinoControls({ view, onAction }: { view: GameView; onAction: (a: Acti
     <div className="flex flex-col items-center gap-3">
       {myTotal != null && <span className="text-xs text-cream/50">You: <span className="text-brass">{myTotal}</span> pts</span>}
       <div className="flex flex-col items-center gap-1">
-        <span className="plaque-header text-[10px] text-brass/60">Table — tap cards to capture</span>
+        <span className="plaque-header text-[10px] text-brass/60">Table - tap cards to capture</span>
         <div className="flex min-h-24 max-w-lg flex-wrap items-center justify-center gap-1.5">
           {table.length === 0 ? (
             <span className="text-sm text-cream/45">Table is clear.</span>
@@ -1023,7 +1023,7 @@ function CribbageControls({ view, onAction }: { view: GameView; onAction: (a: Ac
           ))}
         </div>
         {iDiscarded ? (
-          <p className="text-xs text-cream/45">Laid to the crib — waiting for your opponent…</p>
+          <p className="text-xs text-cream/45">Laid to the crib - waiting for your opponent…</p>
         ) : (
           <Button size="md" disabled={sel.length !== 2} onClick={sendCrib}>
             Send {sel.length}/2 to the crib
@@ -1053,7 +1053,7 @@ function CribbageControls({ view, onAction }: { view: GameView; onAction: (a: Ac
           );
         })}
       </div>
-      {view.hand.length === 0 && <p className="text-xs text-cream/45">Hand played out — counting the show…</p>}
+      {view.hand.length === 0 && <p className="text-xs text-cream/45">Hand played out - counting the show…</p>}
       {view.hand.length > 0 && !myTurn && <p className="text-xs text-cream/45">Waiting…</p>}
     </div>
   );
@@ -1167,7 +1167,7 @@ function FiveHundredControls({ view, onAction }: { view: GameView; onAction: (a:
 
 // ── End overlay ───────────────────────────────────────────────────────────────
 const WIN_LINES = ["The table salutes you.", "Textbook. Deal again?", "That's how it's done.", "House money."];
-const LOSE_LINES = ["Shuffle up — you'll get them next hand.", "So close. Run it back?", "The cards giveth, and they taketh.", "Every dealer has an off night."];
+const LOSE_LINES = ["Shuffle up - you'll get them next hand.", "So close. Run it back?", "The cards giveth, and they taketh.", "Every dealer has an off night."];
 
 function EndOverlay({
   message,

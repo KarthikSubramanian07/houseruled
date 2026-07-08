@@ -1,6 +1,6 @@
 // The engine contract. Every game implements GameDefinition and stores its own
 // state shape S. The Durable Object holds { type, state } opaquely and dispatches
-// through the registry — it never trusts the client, and it projects a per-viewer
+// through the registry - it never trusts the client, and it projects a per-viewer
 // GameView so a player only ever sees their own hand.
 
 import type { Card } from "./cards";

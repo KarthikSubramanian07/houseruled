@@ -1,4 +1,4 @@
-// Phase 3b — plain English → structured rule, via Groq (Llama 3.3 70B). Server
+// Phase 3b - plain English → structured rule, via Groq (Llama 3.3 70B). Server
 // only (uses the GROQ_API_KEY secret; never runs in the browser). Results are
 // cached in KV by normalized text, so a common rule ("twos are wild") hits the
 // model once, ever, across all tables.
@@ -84,7 +84,7 @@ export async function parseRuleText(text: string, game: string, env: AIEnv): Pro
       }),
     });
   } catch {
-    return { ok: false, error: "Couldn't reach the rules engine — try again." };
+    return { ok: false, error: "Couldn't reach the rules engine - try again." };
   }
 
   if (!res.ok) return { ok: false, error: `Rules engine error (${res.status}).` };

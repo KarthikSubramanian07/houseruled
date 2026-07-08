@@ -1,4 +1,4 @@
-// Scopa (2 players) — a 40-card deck (A–10). Play a card; if it matches a table
+// Scopa (2 players) - a 40-card deck (A–10). Play a card; if it matches a table
 // card's value you take it, else if it sums with a set of table cards you take
 // those. Clear the whole table for a "scopa" (sweep). Score cards, coins (♦), the
 // sette bello (7♦), and the primiera. Captures auto-resolve (singles first, then
@@ -101,7 +101,7 @@ export const scopa: GameDefinition<ScopaState> = {
       over: false,
       scores: [0, 0],
       breakdown: "",
-      log: ["Play a card — match or sum to capture."],
+      log: ["Play a card - match or sum to capture."],
     };
   },
 
@@ -144,7 +144,7 @@ export const scopa: GameDefinition<ScopaState> = {
       const willContinue = deck.length > 0 || hands[0].length > 0 || hands[1].length > 0;
       if (table.length === 0 && willContinue) {
         scope[seat] += 1;
-        log = push(log, `${state.players[seat].name} sweeps — scopa!`);
+        log = push(log, `${state.players[seat].name} sweeps - scopa!`);
       } else {
         log = push(log, `${state.players[seat].name} captures ${taken.length + 1}.`);
       }
@@ -169,7 +169,7 @@ export const scopa: GameDefinition<ScopaState> = {
         const scored = scoreHand({ ...state, captured, scope });
         return {
           ok: true,
-          state: { ...state, hands, table, captured, scope, deck, over: true, scores: scored.scores, breakdown: scored.breakdown, log: push(log, `Round over — ${scored.breakdown}.`) },
+          state: { ...state, hands, table, captured, scope, deck, over: true, scores: scored.scores, breakdown: scored.breakdown, log: push(log, `Round over - ${scored.breakdown}.`) },
         };
       }
     }

@@ -3,7 +3,7 @@ import { createRoom, getRoomByCode } from "./room";
 import { isValidCode } from "./code";
 
 // No NEXT_PUBLIC_SUPABASE_* env is set under test, so these exercise the offline
-// "table demo" path — no network, fully deterministic.
+// "table demo" path - no network, fully deterministic.
 
 describe("createRoom (demo mode)", () => {
   it("returns a lobby room with a valid code owned by the host", async () => {

@@ -1,8 +1,8 @@
-// Phase 3a — the structured, executable rule representation and its deterministic
+// Phase 3a - the structured, executable rule representation and its deterministic
 // executor. NO AI here: this is the schema an LLM will later target (Phase 3b) and
 // the engine that runs rules against game state. It must be correct on its own.
 //
-// Scope: Crazy Eights "card_played" rules — the natural home for free-text rules.
+// Scope: Crazy Eights "card_played" rules - the natural home for free-text rules.
 // A rule matches a played card (by rank and/or suit) and applies bounded effects
 // the engine already understands (skip / reverse / draw / wild / play-again).
 
@@ -12,7 +12,7 @@ export type RuleEffect =
   | { kind: "skip"; n: number }
   | { kind: "reverse" }
   | { kind: "draw"; n: number } // the next player draws n
-  | { kind: "wild" } // the card is wild — player declares a suit
+  | { kind: "wild" } // the card is wild - player declares a suit
   | { kind: "play_again" }; // the player takes another turn
 
 export type RuleDuration = "permanent" | { rounds: number };
@@ -137,7 +137,7 @@ export interface AIRuleConflict {
   reason: string;
 }
 
-/** Surface rules that fire on the same card — the table should agree, not silently stack. */
+/** Surface rules that fire on the same card - the table should agree, not silently stack. */
 export function detectAIConflicts(rules: AIRule[]): AIRuleConflict[] {
   const byKey = new Map<string, AIRule[]>();
   for (const r of rules) {

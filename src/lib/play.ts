@@ -21,7 +21,7 @@ export async function startCustomTable(
   try {
     sessionStorage.setItem(PRELOAD_KEY, JSON.stringify({ baseGame, ruleTexts }));
   } catch {
-    /* sessionStorage blocked — setup just won't prefill */
+    /* sessionStorage blocked - setup just won't prefill */
   }
   push(`/room/${room.code}`);
 }

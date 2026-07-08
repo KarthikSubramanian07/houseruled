@@ -2,7 +2,7 @@ import { PlayerSeat } from "./PlayerSeat";
 import type { SeatedPlayer } from "@/lib/types";
 
 // The card table itself. Seats arrange around a felt oval; the deck rests at
-// center. Generous negative space, no boxy panels — the green does the framing.
+// center. Generous negative space, no boxy panels - the green does the framing.
 // Empty seats fill out to a minimum so a lone host still feels seated at a table.
 
 const MIN_SEATS = 4;
@@ -32,7 +32,7 @@ export function FeltTable({ players }: { players: SeatedPlayer[] }) {
     // Padding reserves room for the seats, which sit centered on the oval's edge
     // and would otherwise hang half-off the container (and scroll on mobile).
     <div className="mx-auto w-full max-w-2xl px-12 py-12">
-      {/* The oval rail — a raised felt table with a brass hairline and inner well. */}
+      {/* The oval rail - a raised felt table with a brass hairline and inner well. */}
       <div className="relative mx-auto aspect-4/3 w-full">
         <div
           className="absolute inset-[14%] rounded-[50%] border border-brass/25"
@@ -44,7 +44,7 @@ export function FeltTable({ players }: { players: SeatedPlayer[] }) {
           }}
         />
 
-        {/* The deck at center — two stacked card backs, the calm before the deal. */}
+        {/* The deck at center - two stacked card backs, the calm before the deal. */}
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
           <div className="relative h-16 w-12">
             <div className="card-back absolute inset-0 rotate-[-6deg] rounded-md shadow-lg" />

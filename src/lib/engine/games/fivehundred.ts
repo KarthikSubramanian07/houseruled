@@ -1,4 +1,4 @@
-// 500 / Five Hundred (4 players, partnerships) — the Australian classic. A 43-card
+// 500 / Five Hundred (4 players, partnerships) - the Australian classic. A 43-card
 // deck (red 4s up, black 5s up, plus the Joker) is dealt 10 each with a 3-card
 // kitty. Bid for the number of tricks (6–10) and a trump suit (or no-trump); the
 // Avondale schedule sets the value. The winner takes the kitty, discards 3, and
@@ -139,7 +139,7 @@ function dealHands(s: FiveState, dealer: number): FiveState {
     turn: (dealer + 1) % 4,
     tricksWon: [0, 0],
     trickCount: 0,
-    log: push(s.log, `Deal ${s.deal + 1} — ${s.players[dealer].name} deals. Bidding opens.`),
+    log: push(s.log, `Deal ${s.deal + 1} - ${s.players[dealer].name} deals. Bidding opens.`),
   };
 }
 
@@ -157,7 +157,7 @@ function scoreDeal(s: FiveState): FiveState {
     parts.push(`${s.players[s.declarer].name}'s team made ${c.tricks}${BID_LABEL[c.bid]} (+${pts})`);
   } else {
     teamScores[dTeam] -= c.value;
-    parts.push(`set — ${s.players[s.declarer].name}'s team −${c.value}`);
+    parts.push(`set - ${s.players[s.declarer].name}'s team −${c.value}`);
   }
   const oppPts = s.tricksWon[oppTeam] * 10;
   teamScores[oppTeam] += oppPts;
@@ -266,8 +266,8 @@ export const fivehundred: GameDefinition<FiveState> = {
         const activeLeft = passed.filter((p) => !p).length;
         if (state.highBid && activeLeft === 1) return { ok: true, state: enterKitty({ ...state, passed, log }) };
         if (activeLeft === 0) {
-          // Everyone passed — redeal with the next dealer.
-          return { ok: true, state: dealHands({ ...state, passed, deal: state.deal + 1, log: push(log, "All pass — redeal.") }, (state.dealer + 1) % 4) };
+          // Everyone passed - redeal with the next dealer.
+          return { ok: true, state: dealHands({ ...state, passed, deal: state.deal + 1, log: push(log, "All pass - redeal.") }, (state.dealer + 1) % 4) };
         }
         const nextSeat = nextActiveIndex(4, seat, 1, (i) => passed[i]);
         return { ok: true, state: { ...state, passed, bidTurn: nextSeat, log } };
@@ -386,7 +386,7 @@ function enterKitty(s: FiveState): FiveState {
     contract: { tricks: s.highBid!.tricks, bid: s.highBid!.bid, value: s.highBid!.value },
     hands,
     kitty: [],
-    log: push(s.log, `${s.players[declarer].name} wins the bid and takes the kitty — discard 3.`),
+    log: push(s.log, `${s.players[declarer].name} wins the bid and takes the kitty - discard 3.`),
   };
 }
 

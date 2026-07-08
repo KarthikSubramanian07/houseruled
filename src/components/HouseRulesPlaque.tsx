@@ -1,4 +1,4 @@
-// The signature element. A small brass-trimmed scorecard pinned to the felt —
+// The signature element. A small brass-trimmed scorecard pinned to the felt -
 // always visible, styled like a plaque, not a generic collapsible drawer. This is
 // where the design spends its visual budget. In Phase 0 it holds the empty state;
 // Phase 2 fills it with toggle rules and Phase 3 with AI-parsed house rules.
@@ -25,7 +25,7 @@ export function HouseRulesPlaque({ rules = [] }: { rules?: HouseRule[] }) {
           </p>
           <p className="text-sm leading-relaxed text-ink/65">
             No custom rules yet. Soon you&apos;ll be able to bend the game to your
-            table — twos wild, queens reverse, loser deals. For now, it&apos;s by
+            table - twos wild, queens reverse, loser deals. For now, it&apos;s by
             the book.
           </p>
         </div>
@@ -42,7 +42,7 @@ export function HouseRulesPlaque({ rules = [] }: { rules?: HouseRule[] }) {
         </ol>
       )}
 
-      {/* Faux ruled lines at the foot — the "scorecard" texture. */}
+      {/* Faux ruled lines at the foot - the "scorecard" texture. */}
       <div aria-hidden className="mt-5 space-y-2 opacity-40">
         <div className="h-px w-full bg-ink/15" />
         <div className="h-px w-full bg-ink/15" />

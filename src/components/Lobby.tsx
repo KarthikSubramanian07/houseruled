@@ -126,7 +126,7 @@ export function Lobby({ code }: { code: string }) {
         <p className="max-w-sm text-cream/70">
           We couldn&apos;t look up table{" "}
           <span className="tabular font-display tracking-widest text-cream">{code}</span> just now.
-          It&apos;s probably a hiccup — give it another shuffle.
+          It&apos;s probably a hiccup - give it another shuffle.
         </p>
         <Button size="lg" onClick={() => window.location.reload()}>Try again</Button>
       </main>

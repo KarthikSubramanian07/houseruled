@@ -1,4 +1,4 @@
-// War — the simplest game, validates the engine end-to-end. Two players, no
+// War - the simplest game, validates the engine end-to-end. Two players, no
 // hidden hands (cards sit in face-down stacks). A single "flip" action resolves a
 // whole battle atomically (including any wars) so there's no multi-step war UI.
 
@@ -126,7 +126,7 @@ export const war: GameDefinition<WarState> = {
     if (stacks[0].length === 0) { over = true; gameWinner = 1; }
     else if (stacks[1].length === 0) { over = true; gameWinner = 0; }
     else if (rounds >= MAX_ROUNDS) {
-      // Time called — the bigger stack wins.
+      // Time called - the bigger stack wins.
       over = true;
       gameWinner = stacks[0].length >= stacks[1].length ? 0 : 1;
       log = push(log, "Time called on a marathon war.");
@@ -160,7 +160,7 @@ export const war: GameDefinition<WarState> = {
         out: state.over && state.winner !== i,
       })),
       turn: state.over ? null : state.players[state.turn].id,
-      hand: [], // War has no hand — cards are in face-down stacks
+      hand: [], // War has no hand - cards are in face-down stacks
       legal: this.legalActions(state, viewer),
       center: {
         battle: state.last,

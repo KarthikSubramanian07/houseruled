@@ -1,4 +1,4 @@
-// Phase 2 — curated, pre-validated house-rule toggles per game. These are simple
+// Phase 2 - curated, pre-validated house-rule toggles per game. These are simple
 // declarative flags the engine reads (NOT the richer Phase 3 free-text schema).
 // Conflicts are hardcoded via `group` (mutually exclusive) and `requires`
 // (dependency), so the picker can warn before a game ever starts.
@@ -27,7 +27,7 @@ const RULES: HouseRule[] = [
 
   // ── Old Maid ──────────────────────────────────────────────────────────────────
   { id: "oldmaid-draw-right", game: "oldmaid", label: "Draw from the right", description: "Draw from your right-hand neighbor instead of your left." },
-  { id: "oldmaid-no-auto-discard", game: "oldmaid", label: "No opening discard", description: "Keep your dealt pairs — only discard pairs made by drawing." },
+  { id: "oldmaid-no-auto-discard", game: "oldmaid", label: "No opening discard", description: "Keep your dealt pairs - only discard pairs made by drawing." },
 
   // ── Crazy Eights (the showcase) ───────────────────────────────────────────────
   { id: "ce8-twos-draw-two", game: "crazyeights", label: "Twos draw two", description: "Play a 2 and the next player draws two cards.", group: "twos" },
@@ -81,7 +81,7 @@ export function detectConflicts(game: string, activeIds: string[]): Conflict[] {
     if (arr.length > 1) {
       conflicts.push({
         ids: arr.map((r) => r.id),
-        reason: `${arr.map((r) => `"${r.label}"`).join(" and ")} both change the same card — pick one.`,
+        reason: `${arr.map((r) => `"${r.label}"`).join(" and ")} both change the same card - pick one.`,
       });
     }
   }

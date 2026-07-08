@@ -1,11 +1,11 @@
 /// <reference types="@cloudflare/workers-types" />
 
-// RoomDO — one Durable Object instance per room code. It is the room AND the
+// RoomDO - one Durable Object instance per room code. It is the room AND the
 // authoritative game server:
 //   • room metadata (host, status) in DO storage
 //   • live players are the connected WebSockets (presence)
 //   • when a game is running, the DO owns its state, validates every action, and
-//     sends each socket its OWN projected view — a player never receives another
+//     sends each socket its OWN projected view - a player never receives another
 //     player's hidden cards.
 // WebSocket Hibernation keeps idle rooms free.
 
@@ -38,7 +38,7 @@ interface GameSlot {
   state: unknown;
 }
 
-const MAX_SOCKETS = 50; // generous ceiling per room (players + spectators) — DoS guard
+const MAX_SOCKETS = 50; // generous ceiling per room (players + spectators) - DoS guard
 
 type ClientMessage =
   | { t: "join"; id: string; name: string; token?: string }
@@ -182,7 +182,7 @@ export class RoomDO implements DurableObject {
     // Identity check. A player id is bound to a secret token on first join. You may
     // (re)claim an id if you hold its token, or if nobody is currently connected as
     // that id (reconnect / lost-token recovery). You may NOT hijack an id that
-    // another live socket is actively holding — that's the hand-reading / turn-steal
+    // another live socket is actively holding - that's the hand-reading / turn-steal
     // attack. Ids leak via presence/views, so possession of the id alone is not proof.
     const tokens = await this.loadTokens();
     const known = tokens[id];
@@ -229,7 +229,7 @@ export class RoomDO implements DurableObject {
 
     const rules = sanitizeRules(msg.game, msg.rules ?? []);
     if (detectConflicts(msg.game, rules).length > 0)
-      return this.sendError(ws, "Those house rules conflict — resolve them first.");
+      return this.sendError(ws, "Those house rules conflict - resolve them first.");
 
     try {
       let state = initGame(msg.game, seats, rules, randomSeed());
@@ -267,7 +267,7 @@ export class RoomDO implements DurableObject {
     this.broadcastGame();
   }
 
-  // Phase 3d — live free-text rule. Host-only; parsed + validated server-side,
+  // Phase 3d - live free-text rule. Host-only; parsed + validated server-side,
   // then applied to the running game and broadcast (it appears on the table).
   private async onProposeRule(ws: WebSocket, msg: { text: string }): Promise<void> {
     const actor = this.attachmentOf(ws);
@@ -346,7 +346,7 @@ export class RoomDO implements DurableObject {
     return att && att.id ? att : null;
   }
 
-  /** Unique joined players, in join order — the seats a game starts with. */
+  /** Unique joined players, in join order - the seats a game starts with. */
   private seatedPlayers(): { id: string; name: string }[] {
     const byId = new Map<string, SocketAttachment>();
     for (const ws of this.state.getWebSockets()) {

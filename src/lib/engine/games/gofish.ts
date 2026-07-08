@@ -1,4 +1,4 @@
-// Go Fish — ask an opponent for a rank you hold; collect books of four.
+// Go Fish - ask an opponent for a rank you hold; collect books of four.
 
 import { standardDeck, shuffle, type Card, type Rank, RANK_LABEL } from "../cards";
 import { makeRng } from "../rng";
@@ -136,7 +136,7 @@ export const gofish: GameDefinition<GoFishState> = {
         hands[seat].push(drawn);
         // Lucky draw of the asked rank → go again (standard rule).
         if (drawn.r === rank) {
-          log = push(log, `${state.players[seat].name} fished the ${label} — go again!`);
+          log = push(log, `${state.players[seat].name} fished the ${label} - go again!`);
           goAgain = true;
         }
       }
@@ -164,7 +164,7 @@ export const gofish: GameDefinition<GoFishState> = {
         if (r.drew) log = push(log, `${state.players[next].name} draws to stay in.`);
       }
     } else if (hands[seat].length === 0 && pool.length > 0) {
-      // Asker earned another turn but emptied their hand — refill one.
+      // Asker earned another turn but emptied their hand - refill one.
       hands[seat].push(pool[0]);
       pool = pool.slice(1);
     } else if (hands[seat].length === 0 && pool.length === 0) {

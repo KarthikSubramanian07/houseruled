@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { getGuide } from "@/lib/engine/guides";
 
-/** The guide content itself — reusable inside a modal, a card, or a lobby panel. */
+/** The guide content itself - reusable inside a modal, a card, or a lobby panel. */
 export function GuideBody({ type, className = "" }: { type: string; className?: string }) {
   const guide = getGuide(type);
   if (!guide) return null;

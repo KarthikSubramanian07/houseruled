@@ -1,4 +1,4 @@
-// Casino (2 players) — the fishing game. Play a card to capture table cards by
+// Casino (2 players) - the fishing game. Play a card to capture table cards by
 // matching a rank (pairing, works for face cards) or by summing number cards to
 // your card's value. You choose exactly what to take, so which cards you grab
 // matters: score most-cards (3), most-spades (1), 10♦ "big casino" (2), 2♠
@@ -59,9 +59,9 @@ function partitionable(cards: Card[], v: number | null, rank: Rank): boolean {
   if (cards.length === 0) return true;
   const first = cards[0];
   const rest = cards.slice(1);
-  // Group A: pair — first card matches the played rank, captured on its own.
+  // Group A: pair - first card matches the played rank, captured on its own.
   if (first.r === rank && partitionable(rest, v, rank)) return true;
-  // Group B: sum — first is a number card that starts a group totalling v.
+  // Group B: sum - first is a number card that starts a group totalling v.
   const fv = numVal(first);
   if (v != null && fv != null && fv <= v) {
     const need = v - fv;
@@ -143,14 +143,14 @@ function deal(state: CasinoState, dealer: number): CasinoState {
     dealer,
     lastCapturer: (dealer + 1) % 2,
     dealtOver: false,
-    log: push(state.log, `Deal ${state.deal + 1} — ${state.players[(dealer + 1) % 2].name} leads.`),
+    log: push(state.log, `Deal ${state.deal + 1} - ${state.players[(dealer + 1) % 2].name} leads.`),
   };
 }
 
 export const casino: GameDefinition<CasinoState> = {
   type: "casino",
   name: "Casino",
-  blurb: "Capture cards by matching or summing. Grab the aces, spades, and 10♦ — every card counts.",
+  blurb: "Capture cards by matching or summing. Grab the aces, spades, and 10♦ - every card counts.",
   minPlayers: 2,
   maxPlayers: 2,
 
@@ -250,7 +250,7 @@ export const casino: GameDefinition<CasinoState> = {
         const next: CasinoState = {
           ...state, hands, table, captured, sweeps, deck, turn, lastCapturer,
           total, scores: pts, breakdown, dealtOver: true,
-          log: push(log, `Deal scored — ${breakdown}. Match ${total[0]}–${total[1]}.`),
+          log: push(log, `Deal scored - ${breakdown}. Match ${total[0]}–${total[1]}.`),
         };
         if (done) return { ok: true, state: { ...next, over: true } };
         // Start the next deal; the deal passes.

@@ -1,10 +1,10 @@
-// Euchre — 4 players in fixed partnerships (0&2 vs 1&3), a 24-card deck (9–A),
+// Euchre - 4 players in fixed partnerships (0&2 vs 1&3), a 24-card deck (9–A),
 // trump chosen by bidding on a turned-up card, and the bower twist: the Jack of
 // trump (right bower) and the Jack of trump's same-color suit (left bower) are the
 // two highest trumps, and the left bower counts as the trump suit. Single hand:
 // makers score 1 (2 for all five = a march); defenders score 2 for a euchre.
 //
-// v1 omits "going alone" (all four always play) — noted for a later pass.
+// v1 omits "going alone" (all four always play) - noted for a later pass.
 
 import { standardDeck, shuffle, type Card, type Suit } from "../cards";
 import { makeRng } from "../rng";
@@ -290,7 +290,7 @@ function score(state: EuchreState): EuchreState {
   if (makerTricks >= 3) {
     const pts = makerTricks === 5 ? 2 : 1;
     scores[makerTeam] = pts;
-    msg = `Makers take ${makerTricks} — ${pts} point${pts > 1 ? "s (march!)" : ""}.`;
+    msg = `Makers take ${makerTricks} - ${pts} point${pts > 1 ? "s (march!)" : ""}.`;
   } else {
     scores[1 - makerTeam] = 2;
     msg = "Euchred! Defenders score 2.";

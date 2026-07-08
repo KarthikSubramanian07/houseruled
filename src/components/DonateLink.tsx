@@ -1,6 +1,6 @@
 import { DONATE_URL } from "@/lib/env";
 
-/** A quiet "buy me a coffee" link. Houseruled is free forever — this just helps
+/** A quiet "buy me a coffee" link. Houseruled is free forever - this just helps
  *  keep the felt on the table. */
 export function DonateLink({ className = "" }: { className?: string }) {
   return (

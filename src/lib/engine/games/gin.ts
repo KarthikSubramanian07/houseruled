@@ -1,4 +1,4 @@
-// Gin Rummy (2 players) — draw a card, discard one, form melds (sets of a rank or
+// Gin Rummy (2 players) - draw a card, discard one, form melds (sets of a rank or
 // runs of a suit), and knock when your deadwood ≤ 10 (or gin at 0). The heart of
 // it is bestMelds(): the minimum-deadwood partition of a hand, used for both
 // eligibility and scoring, plus lay-offs against the knocker's melds.
@@ -145,7 +145,7 @@ const UNDERCUT_BONUS = 25;
 export const gin: GameDefinition<GinState> = {
   type: "gin",
   name: "Gin Rummy",
-  blurb: "Draw, discard, and build melds. Knock when your deadwood is 10 or less — or go gin.",
+  blurb: "Draw, discard, and build melds. Knock when your deadwood is 10 or less - or go gin.",
   minPlayers: 2,
   maxPlayers: 2,
 
@@ -223,7 +223,7 @@ export const gin: GameDefinition<GinState> = {
     if (action.type === "knock" || action.type === "gin") {
       const ginHand = meld.value === 0;
       if (action.type === "knock" && meld.value > 10) return { state, ok: false, error: "Deadwood too high to knock." };
-      if (action.type === "gin" && !ginHand) return { state, ok: false, error: "Not gin — you still have deadwood." };
+      if (action.type === "gin" && !ginHand) return { state, ok: false, error: "Not gin - you still have deadwood." };
       const opp = seat === 0 ? 1 : 0;
       const oppMeld = bestMelds(hands[opp]);
       let oppDw = oppMeld.value;
@@ -253,7 +253,7 @@ export const gin: GameDefinition<GinState> = {
     // plain discard → pass turn
     // Stock nearly exhausted with no knock → a wash.
     if (stock.length <= 2) {
-      return { ok: true, state: { ...state, hands, stock, discard, over: true, phase: "over", scores: [0, 0], outcome: "Stock ran out — a wash.", log: push(log, "Stock ran out — a wash.") } };
+      return { ok: true, state: { ...state, hands, stock, discard, over: true, phase: "over", scores: [0, 0], outcome: "Stock ran out - a wash.", log: push(log, "Stock ran out - a wash.") } };
     }
     return { ok: true, state: { ...state, hands, stock, discard, turn: seat === 0 ? 1 : 0, phase: "draw", log } };
   },

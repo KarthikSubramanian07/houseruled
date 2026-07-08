@@ -1,7 +1,7 @@
 -- ═══════════════════════════════════════════════════════════════════════════
--- Houseruled — D1 (SQLite) schema
+-- Houseruled - D1 (SQLite) schema
 --
--- Live rooms and game state do NOT live here — each room is a Durable Object
+-- Live rooms and game state do NOT live here - each room is a Durable Object
 -- (see src/server/room-do.ts), addressed by its code. D1 holds the durable,
 -- queryable library: saved custom games (Phase 4/5) and optional accounts
 -- (Phase 5). Empty at Phase 0; defined now so the schema is stable.
@@ -16,7 +16,7 @@ create table if not exists users (
   created_at   text not null default (datetime('now'))
 );
 
--- Saved, shareable rulesets — the community library (Phase 4/5).
+-- Saved, shareable rulesets - the community library (Phase 4/5).
 create table if not exists custom_games (
   id           text primary key,
   slug         text not null unique,

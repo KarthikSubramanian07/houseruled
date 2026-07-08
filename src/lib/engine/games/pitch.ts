@@ -1,4 +1,4 @@
-// Pitch / Auction Setback (4 players) — bid 2–4 for the points you'll take; the
+// Pitch / Auction Setback (4 players) - bid 2–4 for the points you'll take; the
 // high bidder ("pitcher") leads, and the suit they lead becomes trump. Four points
 // are up for grabs each hand: High, Low, Jack (of trump), and Game (most card
 // points). Make your bid or get "set". Single hand, high score wins.
@@ -123,7 +123,7 @@ export const pitch: GameDefinition<PitchState> = {
     const hand = state.hands[seat];
     // First lead sets trump → any card.
     if (state.trick.length === 0) return hand.map((card) => ({ type: "play", card }));
-    // Otherwise follow the led suit — but a player may ALWAYS trump in (Auction
+    // Otherwise follow the led suit - but a player may ALWAYS trump in (Auction
     // Pitch), and if void of the led suit may play anything.
     const led = state.trick[0].card.s;
     const canFollow = hand.filter((c) => c.s === led);

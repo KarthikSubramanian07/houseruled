@@ -1,11 +1,11 @@
 import { ImageResponse } from "next/og";
 
 // Social share image (1200×630). Built purely from boxes/gradients so it needs
-// no embedded font — the build can never fail fetching one. The title/tagline
+// no embedded font - the build can never fail fetching one. The title/tagline
 // ride the OG <meta> text tags; this is the brand mark on felt.
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
-export const alt = "Houseruled — your rules, your game, any deck";
+export const alt = "Houseruled - your rules, your game, any deck";
 
 const BRASS = "#C9A24B";
 

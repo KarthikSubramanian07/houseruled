@@ -1,5 +1,5 @@
 // Game registry. The Durable Object holds { type, state } opaquely and dispatches
-// through here — it never needs to know a specific game's internals.
+// through here - it never needs to know a specific game's internals.
 
 import type { Action, GameDefinition, GameView, SeatInfo } from "./types";
 import type { AIRule } from "./airules";

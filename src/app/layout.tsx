@@ -4,7 +4,7 @@ import { AdSenseScript } from "@/components/AdSense";
 import { SITE_URL } from "@/lib/env";
 import "./globals.css";
 
-// Display face: Fraunces — a warm, characterful serif for game titles, room codes
+// Display face: Fraunces - a warm, characterful serif for game titles, room codes
 // and the hero. It reads "well-worn card-table plaque," not "SaaS landing page."
 const fraunces = Fraunces({
   subsets: ["latin"],
@@ -14,16 +14,16 @@ const fraunces = Fraunces({
   display: "swap",
 });
 
-// Body/UI face: Inter — quiet, legible at 375px, gets out of the way.
+// Body/UI face: Inter - quiet, legible at 375px, gets out of the way.
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
   display: "swap",
 });
 
-const TITLE = "Houseruled — your rules, your game, any deck";
+const TITLE = "Houseruled - your rules, your game, any deck";
 const DESCRIPTION =
-  "A free-forever card table you play with friends over a link. Bring the deck, bring your house rules — no app, no account, no catch.";
+  "A free-forever card table you play with friends over a link. Bring the deck, bring your house rules - no app, no account, no catch.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

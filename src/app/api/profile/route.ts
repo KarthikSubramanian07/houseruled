@@ -3,7 +3,7 @@ import { upsertProfile, authorizeWrite, type LibraryEnv } from "@/lib/library";
 
 export const dynamic = "force-dynamic";
 
-// POST { id, name, secret } → { ok } — upsert this player's public profile name.
+// POST { id, name, secret } → { ok } - upsert this player's public profile name.
 export async function POST(request: Request): Promise<Response> {
   let body: { id?: unknown; name?: unknown; secret?: unknown };
   try {

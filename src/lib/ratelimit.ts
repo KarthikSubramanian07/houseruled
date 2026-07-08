@@ -1,6 +1,6 @@
 // Coarse per-IP rate limiting for the public AI endpoints, backed by the same KV
 // used for rule caching. Fixed-window counters (eventually-consistent KV is fine
-// for abuse throttling). Fails OPEN if KV or the client IP is unavailable — this
+// for abuse throttling). Fails OPEN if KV or the client IP is unavailable - this
 // protects the Groq bill, it must never take the feature down.
 
 /** Minimal KV surface (avoids depending on @cloudflare/workers-types here). */
@@ -56,7 +56,7 @@ export async function rateLimit(
 /** A 429 response with a Retry-After header. */
 export function tooMany(retryAfter: number): Response {
   return Response.json(
-    { ok: false, error: "You're going a little fast — give it a moment." },
+    { ok: false, error: "You're going a little fast - give it a moment." },
     { status: 429, headers: { "Retry-After": String(retryAfter) } },
   );
 }

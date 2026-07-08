@@ -13,7 +13,7 @@ export async function generateMetadata({
   return {
     title: `Table ${clean}`,
     description: `Join table ${clean} on Houseruled.`,
-    // Private, ephemeral lobbies — keep them out of search results.
+    // Private, ephemeral lobbies - keep them out of search results.
     robots: { index: false, follow: false },
   };
 }

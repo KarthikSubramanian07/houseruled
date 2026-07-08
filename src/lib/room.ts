@@ -60,10 +60,10 @@ export async function createRoom(host: Player): Promise<Room> {
     });
 
     if (res.status === 201) return mapMeta((await res.json()) as RoomMetaResponse);
-    if (res.status === 409) continue; // code already taken — try another
+    if (res.status === 409) continue; // code already taken - try another
     throw new Error(`Failed to create room (${res.status})`);
   }
-  throw new Error("Could not generate a free room code — try again.");
+  throw new Error("Could not generate a free room code - try again.");
 }
 
 /**

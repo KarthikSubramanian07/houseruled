@@ -1,4 +1,4 @@
-// Cheat (Bluff), a.k.a. "I Doubt It" — play cards face-down claiming the current
+// Cheat (Bluff), a.k.a. "I Doubt It" - play cards face-down claiming the current
 // rank; the next player can call your bluff. Wrong caller eats the pile; a caught
 // liar eats the pile. First to empty their hand (uncaught) wins.
 //
@@ -40,7 +40,7 @@ const cardKey = (c: Card) => `${c.r}${c.s}`;
 export const cheat: GameDefinition<CheatState> = {
   type: "cheat",
   name: "Cheat (Bluff)",
-  blurb: "Play cards face-down and claim the rank — lie if you must. Get caught and eat the pile.",
+  blurb: "Play cards face-down and claim the rank - lie if you must. Get caught and eat the pile.",
   minPlayers: 2,
   maxPlayers: 6,
 
@@ -124,7 +124,7 @@ export const cheat: GameDefinition<CheatState> = {
           return { ok: true, state: winBy(state, claim.seat, `${callerName} doubted an honest play`) };
         }
         hands[seat] = hands[seat].concat(state.pile);
-        log = push(log, `${callerName} doubted — but ${claimerName} was honest! ${callerName} takes ${state.pile.length}.`);
+        log = push(log, `${callerName} doubted - but ${claimerName} was honest! ${callerName} takes ${state.pile.length}.`);
         return { ok: true, state: { ...state, hands, pile: [], claim: null, winnerPending: -1, turn: claim.seat, log } };
       }
       // Claimer lied.
@@ -170,7 +170,7 @@ export const cheat: GameDefinition<CheatState> = {
 };
 
 function winBy(state: CheatState, seat: number, why: string): CheatState {
-  return { ...state, over: true, winner: seat, log: push(state.log, `${state.players[seat].name} is out — ${why}!`) };
+  return { ...state, over: true, winner: seat, log: push(state.log, `${state.players[seat].name} is out - ${why}!`) };
 }
 
 function sortHand(hand: Card[]): Card[] {

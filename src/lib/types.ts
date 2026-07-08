@@ -1,4 +1,4 @@
-// Shared domain types. Kept deliberately small in Phase 0 — game state lands in
+// Shared domain types. Kept deliberately small in Phase 0 - game state lands in
 // Phase 1. Room/presence shapes mirror RoomDO (src/server/room-do.ts).
 
 export type RoomStatus = "lobby" | "in_game" | "finished";

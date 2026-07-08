@@ -1,6 +1,6 @@
 // Community library + public profiles + favorites (Phase 5), all in D1. Server
 // only. Identity is the player's id (anonymous localStorage id today, Google-auth
-// id later — same column). Profiles are public and queryable by id.
+// id later - same column). Profiles are public and queryable by id.
 // Minimal D1 shapes so this compiles without @cloudflare/workers-types.
 
 export interface D1PreparedStatement {
@@ -76,7 +76,7 @@ async function sha256hex(s: string): Promise<string> {
  * Prove the caller owns `id` before a write. First write for an id binds its
  * secret hash (TOFU); later writes must match. Fails OPEN on DB errors (e.g. the
  * table not migrated yet) so a rollout never blocks writes; only a definitive
- * secret mismatch — or a claimed id presented with no secret — fails CLOSED.
+ * secret mismatch - or a claimed id presented with no secret - fails CLOSED.
  */
 export async function authorizeWrite(env: LibraryEnv, id: string, secret: string): Promise<boolean> {
   if (!env.DB) return true; // library not configured (e.g. next dev)
