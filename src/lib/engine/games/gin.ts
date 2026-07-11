@@ -196,9 +196,9 @@ export const gin: GameDefinition<GinState> = {
     const seat = state.players.findIndex((p) => p.id === actor);
     if (seat !== state.turn) return { state, ok: false, error: "Not your turn." };
     const hands = state.hands.map((h) => h.slice());
-    let stock = state.stock.slice();
-    let discard = state.discard.slice();
-    let log = state.log;
+    const stock = state.stock.slice();
+    const discard = state.discard.slice();
+    const log = state.log;
 
     if (state.phase === "draw") {
       if (action.type === "drawStock") {

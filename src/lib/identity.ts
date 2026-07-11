@@ -13,7 +13,12 @@ const SECRET_KEY = "houseruled.player.secret";
 function makeId(): string {
   const cryptoObj = typeof globalThis !== "undefined" ? globalThis.crypto : undefined;
   if (cryptoObj?.randomUUID) return cryptoObj.randomUUID();
-  // Fallback for old runtimes.
+  if (cryptoObj?.getRandomValues) {
+    const buf = new Uint8Array(16);
+    cryptoObj.getRandomValues(buf);
+    return "p_" + [...buf].map((b) => b.toString(16).padStart(2, "0")).join("");
+  }
+  // Last-resort fallback for ancient runtimes without Web Crypto.
   return "p_" + Math.random().toString(36).slice(2) + Date.now().toString(36);
 }
 
