@@ -32,7 +32,7 @@ const isBlackjack = (h: Card[]) => h.length === 2 && handTotal(h).total === 21;
 function settle(s: BJState): BJState {
   const dealerHitsSoft17 = s.rules.includes("bj-dealer-hits-soft-17");
   const dealer = s.dealer.slice();
-  let shoe = s.shoe.slice();
+  const shoe = s.shoe.slice();
   let log = s.log;
   for (let guard = 0; guard < 30; guard++) {
     const { total, soft } = handTotal(dealer);

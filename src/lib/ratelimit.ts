@@ -11,7 +11,11 @@ export interface KVLike {
 
 /** The client's IP, as Cloudflare sees it. */
 export function clientIp(request: Request): string {
-  return request.headers.get("CF-Connecting-IP") || request.headers.get("X-Forwarded-For") || "";
+  const cf = request.headers.get("CF-Connecting-IP")?.trim();
+  if (cf) return cf;
+  const xff = request.headers.get("X-Forwarded-For");
+  if (!xff) return "";
+  return xff.split(",")[0]?.trim() ?? "";
 }
 
 export interface RateResult {

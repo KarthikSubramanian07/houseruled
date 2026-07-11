@@ -52,7 +52,7 @@ describe("casino", () => {
   });
 
   it("trails a card face-up when you don't capture", () => {
-    let s = casino.init(seats, [], 6);
+    const s = casino.init(seats, [], 6);
     const before = s.table.length;
     const card = s.hands[0][0];
     const r = casino.apply(s, "a", { type: "trail", card });

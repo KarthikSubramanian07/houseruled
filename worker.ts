@@ -18,8 +18,14 @@ export { RoomDO };
 const ROOM_PATH = /^\/api\/room\/([^/]+)(?:\/(ws))?$/;
 const CODE_RE = /^[A-Z0-9]{4,12}$/; // lenient guard; the client validates strictly
 
+interface WorkerEnv {
+  ROOM_DO: DurableObjectNamespace;
+  // OpenNext handler receives the full env; keep it opaque here.
+  [key: string]: unknown;
+}
+
 export default {
-  async fetch(request: Request, env: any, ctx: ExecutionContext): Promise<Response> {
+  async fetch(request: Request, env: WorkerEnv, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
     const match = url.pathname.match(ROOM_PATH);
 

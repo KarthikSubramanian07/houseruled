@@ -117,7 +117,7 @@ export const hearts: GameDefinition<HeartsState> = {
     const hands = state.hands.map((h) => h.slice());
     hands[seat] = hands[seat].filter((c) => !(c.r === card.r && c.s === card.s));
     const trick = [...state.trick, { seat, card }];
-    let heartsBroken = state.heartsBroken || card.s === "H";
+    const heartsBroken = state.heartsBroken || card.s === "H";
     let log = state.log;
     const taken = state.taken.map((t) => t.slice());
     let leader = state.leader;

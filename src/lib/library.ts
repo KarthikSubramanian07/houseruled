@@ -74,23 +74,25 @@ async function sha256hex(s: string): Promise<string> {
 
 /**
  * Prove the caller owns `id` before a write. First write for an id binds its
- * secret hash (TOFU); later writes must match. Fails OPEN on DB errors (e.g. the
- * table not migrated yet) so a rollout never blocks writes; only a definitive
- * secret mismatch - or a claimed id presented with no secret - fails CLOSED.
+ * secret hash (TOFU); later writes must match. Unclaimed ids require a non-empty
+ * secret so a stranger cannot write as an id they do not hold. Fails OPEN on DB
+ * errors (e.g. the table not migrated yet) so a rollout never blocks writes;
+ * only a definitive secret mismatch - or a claimed/unclaimed id presented with
+ * no secret - fails CLOSED.
  */
 export async function authorizeWrite(env: LibraryEnv, id: string, secret: string): Promise<boolean> {
   if (!env.DB) return true; // library not configured (e.g. next dev)
   if (!id) return false;
+  if (!secret) return false; // never authorize a write without a secret when DB is on
   try {
     const row = await env.DB.prepare("select secret_hash from player_auth where player_id = ?").bind(id).first<{ secret_hash: string }>();
     if (!row) {
-      if (!secret) return true; // legacy/unclaimed id → allow (can't bind without a secret)
       const hash = await sha256hex(secret);
       await env.DB.prepare("insert into player_auth (player_id, secret_hash) values (?, ?) on conflict(player_id) do nothing").bind(id, hash).run();
       const check = await env.DB.prepare("select secret_hash from player_auth where player_id = ?").bind(id).first<{ secret_hash: string }>();
       return !check || check.secret_hash === hash; // survive a concurrent bind race
     }
-    return !!secret && row.secret_hash === (await sha256hex(secret));
+    return row.secret_hash === (await sha256hex(secret));
   } catch {
     return true; // table missing / DB hiccup → don't block writes
   }
