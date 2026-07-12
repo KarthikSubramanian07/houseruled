@@ -17,11 +17,10 @@ const config = [
     ],
   },
   {
-    // Restored lint after Next 16 dropped `next lint`. These React Compiler rules
-    // flag existing patterns; tracked for a follow-up cleanup, not merge blockers.
+    // React Compiler rules are errors once warning sites were refactored.
     rules: {
-      "react-hooks/set-state-in-effect": "warn",
-      "react-hooks/refs": "warn",
+      "react-hooks/set-state-in-effect": "error",
+      "react-hooks/refs": "error",
     },
   },
 ];

@@ -72,29 +72,31 @@ async function sha256hex(s: string): Promise<string> {
   return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
+export type AuthorizeResult =
+  | { status: "ok" }
+  | { status: "invalid_credentials" }
+  | { status: "auth_unavailable" };
+
 /**
  * Prove the caller owns `id` before a write. First write for an id binds its
  * secret hash (TOFU); later writes must match. Unclaimed ids require a non-empty
- * secret so a stranger cannot write as an id they do not hold. Fails OPEN on DB
- * errors (e.g. the table not migrated yet) so a rollout never blocks writes;
- * only a definitive secret mismatch - or a claimed/unclaimed id presented with
- * no secret - fails CLOSED.
+ * secret so a stranger cannot write as an id they do not hold. Fails closed on
+ * DB errors so a compromised or unavailable store never authorizes writes.
  */
-export async function authorizeWrite(env: LibraryEnv, id: string, secret: string): Promise<boolean> {
-  if (!env.DB) return true; // library not configured (e.g. next dev)
-  if (!id) return false;
-  if (!secret) return false; // never authorize a write without a secret when DB is on
+export async function authorizeWrite(env: LibraryEnv, id: string, secret: string): Promise<AuthorizeResult> {
+  if (!env.DB) return { status: "ok" }; // library not configured (e.g. next dev)
+  if (!id || !secret) return { status: "invalid_credentials" };
   try {
     const row = await env.DB.prepare("select secret_hash from player_auth where player_id = ?").bind(id).first<{ secret_hash: string }>();
     if (!row) {
       const hash = await sha256hex(secret);
       await env.DB.prepare("insert into player_auth (player_id, secret_hash) values (?, ?) on conflict(player_id) do nothing").bind(id, hash).run();
       const check = await env.DB.prepare("select secret_hash from player_auth where player_id = ?").bind(id).first<{ secret_hash: string }>();
-      return !check || check.secret_hash === hash; // survive a concurrent bind race
+      return !check || check.secret_hash === hash ? { status: "ok" } : { status: "invalid_credentials" };
     }
-    return row.secret_hash === (await sha256hex(secret));
+    return row.secret_hash === (await sha256hex(secret)) ? { status: "ok" } : { status: "invalid_credentials" };
   } catch {
-    return true; // table missing / DB hiccup → don't block writes
+    return { status: "auth_unavailable" };
   }
 }
 

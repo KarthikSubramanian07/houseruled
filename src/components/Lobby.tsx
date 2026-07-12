@@ -10,10 +10,10 @@ import { GameSetup } from "./game/GameSetup";
 import { GameTable } from "./game/GameTable";
 import { ChatPanel } from "./game/ChatPanel";
 import { NameEditor } from "./NameEditor";
-import { getPlayer } from "@/lib/identity";
+import { useOrigin, usePlayer } from "@/lib/use-player";
 import { getRoomByCode } from "@/lib/room";
 import { joinRoomChannel, type ChannelStatus, type ChatMessage, type RoomChannel } from "@/lib/realtime";
-import type { Player, Room, SeatedPlayer } from "@/lib/types";
+import type { Room, SeatedPlayer } from "@/lib/types";
 import type { Action, GameView } from "@/lib/engine/types";
 
 function CopyButton({ value, label }: { value: string; label: string }) {
@@ -52,11 +52,24 @@ function StatusPill({ status }: { status: ChannelStatus }) {
 }
 
 export function Lobby({ code }: { code: string }) {
-  const [player, setPlayer] = useState<Player | null>(null);
+  const player = usePlayer();
+  if (!player.id) {
+    return (
+      <main className="flex flex-1 items-center justify-center px-6">
+        <p className="font-display text-2xl text-cream/60">Pulling up a chair…</p>
+      </main>
+    );
+  }
+  return <LobbySession key={code} code={code} playerId={player.id} playerName={player.name} />;
+}
+
+function LobbySession({ code, playerId, playerName }: { code: string; playerId: string; playerName: string }) {
+  const player = { id: playerId, name: playerName };
+  const origin = useOrigin();
+  const shareUrl = origin ? `${origin}/room/${code}` : "";
   const [room, setRoom] = useState<Room | null | undefined>(undefined);
   const [players, setPlayers] = useState<SeatedPlayer[]>([]);
   const [status, setStatus] = useState<ChannelStatus>("connecting");
-  const [shareUrl, setShareUrl] = useState("");
   const [lookupFailed, setLookupFailed] = useState(false);
   const [game, setGame] = useState<GameView | null>(null);
   const [chat, setChat] = useState<ChatMessage[]>([]);
@@ -67,22 +80,14 @@ export function Lobby({ code }: { code: string }) {
   const noticeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    if (typeof window !== "undefined") setShareUrl(`${window.location.origin}/room/${code}`);
-    const p = getPlayer();
-    setPlayer(p);
-    setRoom(undefined);
-    setPlayers([]);
-    setGame(null);
-    setChat([]);
-    setLookupFailed(false);
-
+    const seatedPlayer = { id: playerId, name: playerName };
     let channel: RoomChannel | null = null;
     let cancelled = false;
 
     (async () => {
       let found: Room | null;
       try {
-        found = await getRoomByCode(code, p.id);
+        found = await getRoomByCode(code, playerId);
       } catch (err) {
         console.error(err);
         if (!cancelled) setLookupFailed(true);
@@ -93,7 +98,7 @@ export function Lobby({ code }: { code: string }) {
       setRoom(found);
       channel = joinRoomChannel({
         code,
-        player: p,
+        player: seatedPlayer,
         onPlayers: setPlayers,
         onStatus: setStatus,
         onGame: setGame,
@@ -117,7 +122,7 @@ export function Lobby({ code }: { code: string }) {
       channelRef.current = null;
       void channel?.destroy();
     };
-  }, [code]);
+  }, [code, playerId, playerName]);
 
   if (lookupFailed) {
     return (
@@ -145,7 +150,7 @@ export function Lobby({ code }: { code: string }) {
       </main>
     );
   }
-  if (room === undefined || !player) {
+  if (room === undefined) {
     return (
       <main className="flex flex-1 items-center justify-center px-6">
         <p className="font-display text-2xl text-cream/60">Pulling up a chair…</p>

@@ -1,5 +1,6 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { saveCustomGame, listCustomGames, favoriteSlugs, authorizeWrite, type LibraryEnv } from "@/lib/library";
+import { authorizeResponse } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -44,8 +45,9 @@ export async function POST(request: Request): Promise<Response> {
   if (!name || !baseGame) return Response.json({ ok: false, error: "Missing name or base game." }, { status: 400 });
   const e = env();
   // If the game claims a creator, the caller must own that id.
-  if (creatorId && !(await authorizeWrite(e, creatorId, secret))) {
-    return Response.json({ ok: false, error: "Not authorized to publish as that creator." }, { status: 403 });
+  if (creatorId) {
+    const denied = authorizeResponse(await authorizeWrite(e, creatorId, secret));
+    if (denied) return denied;
   }
   return Response.json(await saveCustomGame(e, { name, baseGame, ruleTexts, explanation, creatorId, creatorName }));
 }

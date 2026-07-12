@@ -1,12 +1,19 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "../Button";
 import { HowToPlay } from "./HowToPlay";
 import { GAME_CATALOG, supportsAIRules } from "@/lib/engine/registry";
 import { rulesFor, detectConflicts } from "@/lib/engine/houserules";
 import { summarizeRule, type AIRule } from "@/lib/engine/airules";
-import { takePreload } from "@/lib/play";
+import { takePreload, type Preload } from "@/lib/play";
+
+function initialPreload(isHost: boolean): Preload | null {
+  if (!isHost) return null;
+  const pre = takePreload();
+  if (!pre || !GAME_CATALOG.some((g) => g.type === pre.baseGame)) return null;
+  return pre;
+}
 
 /** Host-only pre-game picker: choose a game, toggle curated house rules (with live
  *  conflict detection), then deal. Non-hosts see a quiet waiting state. */
@@ -19,21 +26,15 @@ export function GameSetup({
   isHost: boolean;
   onStart: (game: string, rules: string[], ruleTexts: string[]) => void;
 }) {
-  const [game, setGame] = useState<string | null>(null);
+  const preload = initialPreload(isHost);
+  const [game, setGame] = useState<string | null>(preload?.baseGame ?? null);
   const [rules, setRules] = useState<Set<string>>(new Set());
-  const [customRules, setCustomRules] = useState<{ text: string; summary: string }[]>([]);
+  const [customRules, setCustomRules] = useState<{ text: string; summary: string }[]>(
+    () => preload?.ruleTexts.map((text) => ({ text, summary: "custom rule" })) ?? [],
+  );
   const [ruleInput, setRuleInput] = useState("");
   const [parsing, setParsing] = useState(false);
   const [parseError, setParseError] = useState<string | null>(null);
-
-  // A game invented/shared elsewhere preloads the picker (host just hits Deal).
-  useEffect(() => {
-    if (!isHost) return;
-    const pre = takePreload();
-    if (!pre || !GAME_CATALOG.some((g) => g.type === pre.baseGame)) return;
-    setGame(pre.baseGame);
-    setCustomRules(pre.ruleTexts.map((text) => ({ text, summary: "custom rule" })));
-  }, [isHost]);
 
   async function addCustomRule() {
     const text = ruleInput.trim();
