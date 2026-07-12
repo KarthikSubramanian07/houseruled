@@ -15,8 +15,10 @@ function mockDb(secrets: Record<string, string>, fail = false): D1DB {
     prepare(sql: string) {
       const isSelect = sql.toLowerCase().includes("select");
       const isInsert = sql.toLowerCase().includes("insert");
-      return {
-        bind(id: string, secretHash?: string) {
+      const stmt = {
+        bind(...values: unknown[]) {
+          const id = String(values[0] ?? "");
+          const secretHash = typeof values[1] === "string" ? values[1] : undefined;
           return {
             async first<T>(): Promise<T | null> {
               if (fail) throw new Error("D1 unavailable");
@@ -29,9 +31,24 @@ function mockDb(secrets: Record<string, string>, fail = false): D1DB {
               if (isInsert && secretHash && !secrets[id]) secrets[id] = secretHash;
               return { success: true };
             },
+            async all<T>(): Promise<{ results: T[] }> {
+              if (fail) throw new Error("D1 unavailable");
+              return { results: [] };
+            },
           };
         },
+        async run() {
+          if (fail) throw new Error("D1 unavailable");
+          return { success: true };
+        },
+        async first<T>(): Promise<T | null> {
+          return null;
+        },
+        async all<T>(): Promise<{ results: T[] }> {
+          return { results: [] };
+        },
       };
+      return stmt;
     },
   };
 }
