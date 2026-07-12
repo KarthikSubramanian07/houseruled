@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { authorizeWrite, type D1DB, type LibraryEnv } from "./library";
+import { authorizeWrite, type D1DB, type D1PreparedStatement, type LibraryEnv } from "./library";
 
 async function sha256hex(s: string): Promise<string> {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
@@ -10,32 +10,45 @@ function makeEnv(db: D1DB): LibraryEnv {
   return { DB: db };
 }
 
+function boundStmt(
+  secrets: Record<string, string>,
+  fail: boolean,
+  isSelect: boolean,
+  isInsert: boolean,
+  id: string,
+  secretHash?: string,
+): D1PreparedStatement {
+  const stmt: D1PreparedStatement = {
+    bind: () => stmt,
+    async first<T>(): Promise<T | null> {
+      if (fail) throw new Error("D1 unavailable");
+      if (!isSelect) return null;
+      const stored = secrets[id];
+      return stored ? ({ secret_hash: stored } as T) : null;
+    },
+    async run() {
+      if (fail) throw new Error("D1 unavailable");
+      if (isInsert && secretHash && !secrets[id]) secrets[id] = secretHash;
+      return { success: true };
+    },
+    async all<T>(): Promise<{ results: T[] }> {
+      if (fail) throw new Error("D1 unavailable");
+      return { results: [] };
+    },
+  };
+  return stmt;
+}
+
 function mockDb(secrets: Record<string, string>, fail = false): D1DB {
   return {
     prepare(sql: string) {
       const isSelect = sql.toLowerCase().includes("select");
       const isInsert = sql.toLowerCase().includes("insert");
-      const stmt = {
+      return {
         bind(...values: unknown[]) {
           const id = String(values[0] ?? "");
           const secretHash = typeof values[1] === "string" ? values[1] : undefined;
-          return {
-            async first<T>(): Promise<T | null> {
-              if (fail) throw new Error("D1 unavailable");
-              if (!isSelect) return null;
-              const stored = secrets[id];
-              return stored ? ({ secret_hash: stored } as T) : null;
-            },
-            async run() {
-              if (fail) throw new Error("D1 unavailable");
-              if (isInsert && secretHash && !secrets[id]) secrets[id] = secretHash;
-              return { success: true };
-            },
-            async all<T>(): Promise<{ results: T[] }> {
-              if (fail) throw new Error("D1 unavailable");
-              return { results: [] };
-            },
-          };
+          return boundStmt(secrets, fail, isSelect, isInsert, id, secretHash);
         },
         async run() {
           if (fail) throw new Error("D1 unavailable");
@@ -48,7 +61,6 @@ function mockDb(secrets: Record<string, string>, fail = false): D1DB {
           return { results: [] };
         },
       };
-      return stmt;
     },
   };
 }
