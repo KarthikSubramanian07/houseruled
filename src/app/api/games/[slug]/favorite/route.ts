@@ -1,5 +1,6 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { toggleFavorite, authorizeWrite, type LibraryEnv } from "@/lib/library";
+import { authorizeResponse } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +22,8 @@ export async function POST(request: Request, ctx: { params: Promise<{ slug: stri
   } catch {
     /* not in the Cloudflare runtime */
   }
-  if (!(await authorizeWrite(env, userId, secret))) return Response.json({ ok: false, error: "Not authorized." }, { status: 403 });
+  const denied = authorizeResponse(await authorizeWrite(env, userId, secret));
+  if (denied) return denied;
   const result = await toggleFavorite(env, userId, slug);
   return Response.json({ ok: true, ...result });
 }

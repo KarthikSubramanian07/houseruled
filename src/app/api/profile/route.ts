@@ -1,5 +1,6 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { upsertProfile, authorizeWrite, type LibraryEnv } from "@/lib/library";
+import { authorizeResponse } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +22,8 @@ export async function POST(request: Request): Promise<Response> {
   } catch {
     /* not in the Cloudflare runtime */
   }
-  if (!(await authorizeWrite(env, id, secret))) return Response.json({ ok: false, error: "Not authorized for this profile." }, { status: 403 });
+  const denied = authorizeResponse(await authorizeWrite(env, id, secret));
+  if (denied) return denied;
   await upsertProfile(env, id, name);
   return Response.json({ ok: true });
 }

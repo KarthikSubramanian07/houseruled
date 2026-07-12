@@ -16,15 +16,18 @@ export function ChatPanel({
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
-  const lastSeen = useRef(0);
-  const unread = open ? 0 : messages.length - lastSeen.current;
+  const [lastSeen, setLastSeen] = useState(0);
+  const unread = open ? 0 : Math.max(0, messages.length - lastSeen);
 
   useEffect(() => {
-    if (open) {
-      lastSeen.current = messages.length;
-      scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
-    }
+    if (!open) return;
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
   }, [messages, open]);
+
+  function toggleOpen() {
+    if (!open) setLastSeen(messages.length);
+    setOpen((wasOpen) => !wasOpen);
+  }
 
   function submit() {
     const t = text.trim();
@@ -67,7 +70,7 @@ export function ChatPanel({
         </div>
       )}
       <button
-        onClick={() => setOpen((o) => !o)}
+        onClick={toggleOpen}
         className="btn-brass relative grid h-12 w-12 place-items-center rounded-full text-lg shadow-lg"
         aria-label="Toggle chat"
       >

@@ -1,15 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import { Wordmark } from "./Wordmark";
 import { NameEditor } from "./NameEditor";
-import { getPlayer } from "@/lib/identity";
+import { usePlayerId } from "@/lib/use-player";
 
 /** Shared top nav: wordmark, Library / Invent / your Profile, and name editing. */
 export function SiteHeader() {
-  const [id, setId] = useState("");
-  useEffect(() => setId(getPlayer().id), []);
+  const id = usePlayerId();
 
   return (
     <header className="flex flex-wrap items-center justify-between gap-x-5 gap-y-2 px-6 py-5 sm:px-10">

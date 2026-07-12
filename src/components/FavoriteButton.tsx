@@ -22,7 +22,11 @@ export function FavoriteButton({ slug, initial = false, size = "md" }: { slug: s
         body: JSON.stringify({ userId: getPlayer().id, secret: getPlayerSecret() }),
       });
       const data = (await res.json()) as { ok: boolean; favorited?: boolean };
-      if (data.ok && typeof data.favorited === "boolean") setFav(data.favorited);
+      if (!res.ok || !data.ok) {
+        setFav(!next);
+        return;
+      }
+      if (typeof data.favorited === "boolean") setFav(data.favorited);
     } catch {
       setFav(!next); // revert
     } finally {
