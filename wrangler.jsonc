@@ -27,8 +27,12 @@
   // so a common rule ("twos are wild") only ever hits Groq once, ever.
   "kv_namespaces": [{ "binding": "RULE_CACHE", "id": "c15bf39885d542e79f0e19a7bba4c25c" }],
   // Community library: saved custom games + optional accounts (Phase 4/5).
-  "d1_databases": [{ "binding": "DB", "database_name": "houseruled", "database_id": "f8cd8824-e474-4e1a-bc96-1039aa6e8707" }],
-  "migrations_dir": "migrations",
+  "d1_databases": [{
+    "binding": "DB",
+    "database_name": "houseruled",
+    "database_id": "f8cd8824-e474-4e1a-bc96-1039aa6e8707",
+    "migrations_dir": "migrations"
+  }],
   // GROQ_API_KEY is a Worker secret (wrangler secret put), never committed.
   // D1 (community library + accounts) lands in Phase 4/5 - the schema is ready in
   // migrations/, and the binding is added here once the DB is created:
