@@ -6,6 +6,9 @@ import { InventGame } from "@/components/game/InventGame";
 export const metadata: Metadata = {
   title: "Invent a game",
   description: "Describe a card game in a sentence and let the AI build it - then play it with friends.",
+  alternates: {
+    canonical: "/invent",
+  },
 };
 
 export default function InventPage() {
