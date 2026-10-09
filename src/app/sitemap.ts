@@ -8,6 +8,10 @@ const PUBLIC_PATHS: { path: string; changeFrequency: MetadataRoute.Sitemap[numbe
   { path: "/", changeFrequency: "weekly", priority: 1 },
   { path: "/games", changeFrequency: "daily", priority: 0.8 },
   { path: "/invent", changeFrequency: "weekly", priority: 0.7 },
+  { path: "/developers", changeFrequency: "monthly", priority: 0.6 },
+  { path: "/about", changeFrequency: "yearly", priority: 0.5 },
+  { path: "/contact", changeFrequency: "yearly", priority: 0.4 },
+  { path: "/privacy", changeFrequency: "yearly", priority: 0.3 },
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {
