@@ -73,3 +73,16 @@ jobs:
           NEXT_PUBLIC_SITE_URL: ${{ vars.NEXT_PUBLIC_SITE_URL }}
           NEXT_PUBLIC_ADSENSE_CLIENT: ${{ vars.NEXT_PUBLIC_ADSENSE_CLIENT }}
           NEXT_PUBLIC_ADSENSE_SLOT: ${{ vars.NEXT_PUBLIC_ADSENSE_SLOT }}
+
+      # The public hostname (playhouseruled.pages.dev) is a Pages project that
+      # proxies to the Worker above over a service binding. Deploy it second so
+      # it always points at a live Worker. Needs "Cloudflare Pages: Edit" on the
+      # API token; non-blocking so a token without it can't fail a good Worker
+      # deploy (the proxy is a one-line pass-through that rarely changes).
+      - name: Deploy Pages proxy (playhouseruled.pages.dev)
+        working-directory: proxy
+        continue-on-error: true
+        run: npx wrangler pages deploy --branch main --commit-dirty=true
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
