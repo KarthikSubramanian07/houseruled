@@ -39,9 +39,10 @@ describe("trust and developer pages", () => {
     for (const doc of [ABOUT, CONTACT, PRIVACY, DEVELOPERS]) expect(doc.heading).toMatch(/Houseruled/);
   });
 
-  it("gives the contact page a real email and address", () => {
+  it("gives the contact page a real channel and address, but no email by default", () => {
     const md = docToMarkdown(CONTACT, SITE);
-    expect(md).toContain("mailto:winnerkarthik07@gmail.com");
+    expect(md).toContain("github.com/KarthikSubramanian07/houseruled/issues");
+    expect(md).not.toContain("mailto:");
     expect(md).toMatch(/Berkeley, California/);
   });
 });

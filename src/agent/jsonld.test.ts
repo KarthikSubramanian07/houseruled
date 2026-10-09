@@ -10,7 +10,10 @@ describe("structuredData", () => {
 
   it("includes an Organization with contactPoint and PostalAddress", () => {
     expect(org).toBeDefined();
-    expect(org.contactPoint).toMatchObject({ "@type": "ContactPoint", contactType: "customer support", email: expect.stringContaining("@") });
+    expect(org.contactPoint).toMatchObject({ "@type": "ContactPoint", contactType: "customer support", url: expect.stringContaining("/contact") });
+    // No personal email is published unless NEXT_PUBLIC_CONTACT_EMAIL is set.
+    expect(org.contactPoint).not.toHaveProperty("email");
+    expect(org).not.toHaveProperty("email");
     expect(org.address).toMatchObject({ "@type": "PostalAddress", addressLocality: "Berkeley", addressRegion: "CA", addressCountry: "US" });
   });
 
