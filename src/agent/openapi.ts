@@ -28,7 +28,7 @@ export function openApiSpec(siteUrl: string) {
       summary: "Read the Houseruled community library of player-invented card games.",
       description:
         "Public, unauthenticated, read-only endpoints. For card game rules and house-rule variants, use the MCP server at /mcp. See /developers.",
-      contact: { name: "Houseruled", email: CONTACT_EMAIL, url: `${siteUrl}/contact` },
+      contact: { name: "Houseruled", url: `${siteUrl}/contact`, ...(CONTACT_EMAIL ? { email: CONTACT_EMAIL } : {}) },
       license: { name: "MIT", identifier: "MIT" },
     },
     servers: [{ url: siteUrl }],

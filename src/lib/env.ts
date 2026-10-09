@@ -18,7 +18,10 @@ export const DEFAULT_SITE_URL = "https://playhouseruled.pages.dev";
 export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL?.trim() || DEFAULT_SITE_URL).replace(/\/$/, "");
 
 // ── Public contact (trust pages, Organization JSON-LD, llms.txt) ─────────────
-export const CONTACT_EMAIL = "winnerkarthik07@gmail.com";
+// Opt-in: no email is published unless NEXT_PUBLIC_CONTACT_EMAIL is set (use a
+// dedicated inbox, not a personal one). Without it, GitHub issues are the channel.
+export const CONTACT_EMAIL = (process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "").trim();
+export const ISSUES_URL = "https://github.com/KarthikSubramanian07/houseruled/issues";
 export const REPO_URL = "https://github.com/KarthikSubramanian07/houseruled";
 
 // ── Support the project ───────────────────────────────────────────────────────

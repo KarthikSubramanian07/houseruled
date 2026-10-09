@@ -6,7 +6,12 @@
 
 import { GAME_CATALOG } from "../lib/engine/registry";
 import { GUIDES } from "../lib/engine/guides";
-import { CONTACT_EMAIL, REPO_URL, SITE_URL } from "../lib/env";
+import { CONTACT_EMAIL, ISSUES_URL, REPO_URL, SITE_URL } from "../lib/env";
+
+/** Where private questions go: the opt-in email, or a GitHub issue. */
+function privateChannel(): string {
+  return CONTACT_EMAIL ? `[${CONTACT_EMAIL}](mailto:${CONTACT_EMAIL})` : `a [GitHub issue](${ISSUES_URL})`;
+}
 
 export type Block =
   | { type: "h2"; text: string }
@@ -109,7 +114,7 @@ export const ABOUT: SiteDoc = {
     { type: "h2", text: "Who builds it" },
     {
       type: "p",
-      text: `Houseruled is an independent project built and maintained by Karthik Subramanian in Berkeley, California. It runs on Cloudflare Workers, Durable Objects (one per live table), D1, and KV. Questions, bug reports, and partnership requests go to [${CONTACT_EMAIL}](mailto:${CONTACT_EMAIL}) or [GitHub issues](${REPO_URL}/issues); see [Contact](/contact).`,
+      text: `Houseruled is an independent project built and maintained by Karthik Subramanian in Berkeley, California. It runs on Cloudflare Workers, Durable Objects (one per live table), D1, and KV. Questions, bug reports, and partnership requests go to ${CONTACT_EMAIL ? `[${CONTACT_EMAIL}](mailto:${CONTACT_EMAIL}) or ` : ""}[GitHub issues](${ISSUES_URL}); see [Contact](/contact).`,
     },
   ],
 };
@@ -118,18 +123,23 @@ export const CONTACT: SiteDoc = {
   path: "/contact",
   title: "Contact Houseruled",
   description:
-    "How to reach the Houseruled maintainer: email for support, privacy, and partnership questions, and GitHub issues for bugs and rule requests.",
+    "How to reach the Houseruled maintainer: GitHub issues for bugs, rule requests, support, privacy, and partnership questions.",
   heading: "Contact Houseruled",
   lede:
     "Houseruled is maintained by one person, in public. These are the fastest ways to get a reply, whether you found a bug, want a game added, or are wiring an agent into the MCP server.",
   blocks: [
-    { type: "h2", text: "Email" },
+    { type: "h2", text: "Support, privacy, and partnerships" },
     {
       type: "ul",
-      items: [
-        `Support, privacy, and partnerships: [${CONTACT_EMAIL}](mailto:${CONTACT_EMAIL})`,
-        "Put \"Houseruled\" in the subject line so it gets routed quickly. Expect a reply within a few days.",
-      ],
+      items: CONTACT_EMAIL
+        ? [
+            `Email [${CONTACT_EMAIL}](mailto:${CONTACT_EMAIL}).`,
+            "Put \"Houseruled\" in the subject line so it gets routed quickly. Expect a reply within a few days.",
+          ]
+        : [
+            `Open a [GitHub issue](${ISSUES_URL}) titled "Contact" with a short note about what you need. Expect a reply within a few days.`,
+            "If it's private, say so and the maintainer will follow up through a private channel. Don't post personal details in a public issue.",
+          ],
     },
     { type: "h2", text: "GitHub" },
     {
@@ -142,12 +152,12 @@ export const CONTACT: SiteDoc = {
     { type: "h2", text: "For agent and app developers" },
     {
       type: "p",
-      text: "Start with [llms.txt](/llms.txt) and the [developer docs](/developers). The MCP server and the read API are public and need no key. If you plan to send meaningful traffic, email first so rate limits can be set sensibly.",
+      text: "Start with [llms.txt](/llms.txt) and the [developer docs](/developers). The MCP server and the read API are public and need no key. If you plan to send meaningful traffic, open a GitHub issue first so rate limits can be set sensibly.",
     },
     { type: "h2", text: "Mailing address" },
     {
       type: "p",
-      text: "Houseruled, Berkeley, California, United States. There is no phone support; email is the reliable channel.",
+      text: `Houseruled, Berkeley, California, United States. There is no phone support; ${CONTACT_EMAIL ? "email" : "GitHub issues"} is the reliable channel.`,
     },
   ],
 };
@@ -188,7 +198,7 @@ export const PRIVACY: SiteDoc = {
     { type: "h2", text: "Your choices" },
     {
       type: "p",
-      text: `To delete a saved game or profile, email [${CONTACT_EMAIL}](mailto:${CONTACT_EMAIL}) with your player id (shown on your profile page) and it will be removed. Houseruled is not directed at children under 13.`,
+      text: `To delete a saved game or profile, send ${privateChannel()} with your player id (shown on your profile page) and it will be removed. Houseruled is not directed at children under 13.`,
     },
   ],
 };
@@ -386,7 +396,7 @@ Houseruled is free forever, needs no account, and is open source (MIT). Tables a
 ## Trust
 
 - [About](/about): who builds Houseruled and what it promises
-- [Contact](/contact): email ${CONTACT_EMAIL} and GitHub issues
+- [Contact](/contact): ${CONTACT_EMAIL ? `email ${CONTACT_EMAIL} and ` : ""}GitHub issues
 - [Privacy](/privacy): exactly what is stored and why
 
 ## Optional
