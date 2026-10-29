@@ -12,9 +12,17 @@ export const HAS_REMOTE_BACKEND = process.env.NODE_ENV === "production";
 // Use `||` (not `??`): an unset GitHub Actions `vars.*` arrives as an EMPTY STRING,
 // not undefined, and `new URL("")` throws at build time. Trim + `||` falls back
 // cleanly so the build is green whether or not the repo variable is configured.
-export const SITE_URL = (
-  process.env.NEXT_PUBLIC_SITE_URL?.trim() || "https://houseruled.karthik-e5e.workers.dev"
-).replace(/\/$/, "");
+// The default is also what the Worker-side agent gateway uses (worker.ts doesn't
+// get NEXT_PUBLIC_* inlined), so keep it pointed at the production origin.
+export const DEFAULT_SITE_URL = "https://playhouseruled.pages.dev";
+export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL?.trim() || DEFAULT_SITE_URL).replace(/\/$/, "");
+
+// ── Public contact (trust pages, Organization JSON-LD, llms.txt) ─────────────
+// Opt-in: no email is published unless NEXT_PUBLIC_CONTACT_EMAIL is set (use a
+// dedicated inbox, not a personal one). Without it, GitHub issues are the channel.
+export const CONTACT_EMAIL = (process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "").trim();
+export const ISSUES_URL = "https://github.com/KarthikSubramanian07/houseruled/issues";
+export const REPO_URL = "https://github.com/KarthikSubramanian07/houseruled";
 
 // ── Support the project ───────────────────────────────────────────────────────
 export const DONATE_URL =

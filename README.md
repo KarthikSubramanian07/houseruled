@@ -7,6 +7,10 @@
 A free-forever card table you play with friends over a link.
 Bring the deck, bring your house rules - no app store, no account, no catch.
 
+**[▶ Play at playhouseruled.pages.dev](https://playhouseruled.pages.dev)**
+
+`card-games` · `multiplayer` · `house-rules` · `nextjs` · `cloudflare-workers` · `durable-objects` · `d1` · `mcp`
+
 </div>
 
 ---
@@ -100,6 +104,29 @@ the room empties, the DO hibernates and bills nothing.
 > OpenNext adapter targeting **Workers with Static Assets** - the successor to the
 > old Pages/`next-on-pages` path. Same free story, current tooling.
 
+## Built for AI agents, too
+
+Ask an assistant *"what card game can five of us play tonight?"* and it can answer
+from Houseruled directly. Everything an agent needs is served by the Worker, ahead
+of Next.js ([`src/agent/`](src/agent/)):
+
+| What | Where | Notes |
+| :--- | :---- | :---- |
+| Agent guide | [`/llms.txt`](https://playhouseruled.pages.dev/llms.txt) | When to use Houseruled, and how to call it |
+| MCP server | [`/mcp`](https://playhouseruled.pages.dev/mcp/server-card) | Streamable HTTP, stateless, no auth; `list_games`, `get_game_rules`, `search_community_games`, `get_community_game` |
+| MCP discovery | `/mcp/server-card`, `/.well-known/ai-catalog.json` | Server Card (SEP-2127) + AI Catalog |
+| REST API | [`/openapi.json`](https://playhouseruled.pages.dev/openapi.json) | Read-only community library |
+| Markdown pages | any page with `Accept: text/markdown` | Same URL, `Vary: Accept`; also `/index.md`, `/about.md`, ... |
+| Agent 404s | unknown paths | Markdown 404 linking back to llms.txt and the sitemap |
+| Trust pages | `/about`, `/contact`, `/privacy`, `/developers` | One copy source for HTML and Markdown ([`content.ts`](src/agent/content.ts)) |
+
+Try it:
+
+```bash
+curl -H 'Accept: text/markdown' https://playhouseruled.pages.dev/
+claude mcp add --transport http houseruled https://playhouseruled.pages.dev/mcp
+```
+
 ## Play locally in 60 seconds
 
 ```bash
@@ -145,9 +172,19 @@ echo "gsk_your_groq_key" | wrangler secret put GROQ_API_KEY   # free at console.
 npm run deploy
 ```
 
-You get a `houseruled.<subdomain>.workers.dev` URL with real, shareable
-multiplayer. The core games need no env vars; the AI features need the Groq
-secret + KV. (Set `NEXT_PUBLIC_SITE_URL` to your final URL for correct SEO tags.)
+That deploys the `houseruled` Worker with real, shareable multiplayer. The core
+games need no env vars; the AI features need the Groq secret + KV.
+
+The public URL is **https://playhouseruled.pages.dev**. The Worker keeps
+`workers_dev` off; a tiny Cloudflare Pages project in [`proxy/`](proxy/) owns the
+clean `pages.dev` hostname and hands every request (WebSockets included) to the
+Worker over a service binding:
+
+```bash
+cd proxy && npx wrangler pages deploy --branch main
+```
+
+(Set `NEXT_PUBLIC_SITE_URL` to your final URL for correct SEO tags.)
 
 > The `GROQ_API_KEY` is a **Worker secret** - it stays server-side and never
 > reaches the browser. AI calls happen in route handlers and the Durable Object.
@@ -162,10 +199,10 @@ npm run typecheck      # tsc for the app + the Worker (separate type worlds)
 
 Every push and PR runs **typecheck → tests → build** via GitHub Actions
 ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)). When `main` is green it
-applies D1 migrations and deploys to Cloudflare. Add these repo settings for the
-deploy job:
+applies D1 migrations, deploys the Worker, then deploys the Pages proxy. Add these
+repo settings for the deploy job:
 
-- **Secrets** - `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`
+- **Secrets** - `CLOUDFLARE_API_TOKEN` (Workers, D1, and Pages edit), `CLOUDFLARE_ACCOUNT_ID`
 - **Variables** - `NEXT_PUBLIC_SITE_URL` (and optionally the AdSense vars)
 
 ## Also an app 📱
@@ -207,7 +244,9 @@ pinned to the felt.
 
 ```
 worker.ts             # custom Worker entry: routes /api/room/* (+ WebSockets) to the DO
+proxy/                # Pages project for playhouseruled.pages.dev → service binding to the Worker
 src/
+  agent/              # llms.txt, MCP server, Markdown negotiation, OpenAPI, JSON-LD
   server/room-do.ts   # RoomDO Durable Object - a room's state + presence + relay
   app/                # routes: landing, /room/[code], manifest, icons, sitemap, robots
   components/         # Wordmark, FeltTable, PlayerSeat, HouseRulesPlaque, …

@@ -1,0 +1,10 @@
+{
+  // Cloudflare Pages project serving https://playhouseruled.pages.dev.
+  // Deploy: `npx wrangler pages deploy` from this directory (CI does it after
+  // the Worker deploys). See public/_worker.js for why this exists.
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "playhouseruled",
+  "pages_build_output_dir": "./public",
+  "compatibility_date": "2025-03-25",
+  "services": [{ "binding": "APP", "service": "houseruled" }]
+}

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Fraunces, Inter } from "next/font/google";
 import { AdSenseScript } from "@/components/AdSense";
 import { SITE_URL } from "@/lib/env";
+import { structuredData } from "@/agent/jsonld";
 import "./globals.css";
 
 // Display face: Fraunces - a warm, characterful serif for game titles, room codes
@@ -21,9 +22,10 @@ const inter = Inter({
   display: "swap",
 });
 
-const TITLE = "Houseruled - your rules, your game, any deck";
+// Brand + product term up front: people (and agents) search "Houseruled card games".
+const TITLE = "Houseruled: free online card games with your house rules";
 const DESCRIPTION =
-  "A free-forever card table you play with friends over a link. Bring the deck, bring your house rules - no app, no account, no catch.";
+  "Houseruled is a free-forever online card table you play with friends over a link. 16 classic card games, your house rules, no app, no account, no catch.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -48,8 +50,8 @@ export const metadata: Metadata = {
     "Blackjack",
     "no download card game",
   ],
-  authors: [{ name: "Karthik" }],
-  creator: "Karthik",
+  authors: [{ name: "Karthik Subramanian", url: "/about" }],
+  creator: "Karthik Subramanian",
   category: "games",
   alternates: {
     canonical: "/",
@@ -96,22 +98,8 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-// Structured data: helps search engines understand this is a free web game.
-const jsonLd = {
-  "@context": "https://schema.org",
-  "@type": "WebApplication",
-  name: "Houseruled",
-  url: SITE_URL,
-  applicationCategory: "GameApplication",
-  operatingSystem: "Any (web browser)",
-  description: DESCRIPTION,
-  browserRequirements: "Requires a modern web browser. No download required.",
-  offers: {
-    "@type": "Offer",
-    price: "0",
-    priceCurrency: "USD",
-  },
-};
+// Structured data: Organization (with contact + address), WebSite, WebApplication.
+const jsonLd = structuredData(SITE_URL, DESCRIPTION);
 
 export default function RootLayout({
   children,
