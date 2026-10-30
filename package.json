@@ -39,6 +39,9 @@
     "wrangler": "^4.156.0"
   },
   "overrides": {
-    "postcss": "^8.5.10"
+    "postcss": "^8.5.10",
+    "@node-minify/core": {
+      "glob": ">=10.5.0 <11"
+    }
   }
 }
