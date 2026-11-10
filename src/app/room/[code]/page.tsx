@@ -28,7 +28,7 @@ export default async function RoomPage({
 
   if (!isValidCode(clean)) {
     return (
-      <main className="flex flex-1 flex-col items-center justify-center gap-6 px-6 text-center">
+      <main id="main-content" tabIndex={-1} className="outline-none flex flex-1 flex-col items-center justify-center gap-6 px-6 text-center">
         <p className="font-display text-5xl text-brass">That&apos;s not a code</p>
         <p className="max-w-sm text-cream/70">
           Table codes are six characters. Double-check the link, or start fresh.

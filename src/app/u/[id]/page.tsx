@@ -39,8 +39,8 @@ function GameCard({ g }: { g: LibGame }) {
         <Link href={`/game/${g.slug}`} className="font-display text-lg text-cream no-underline hover:text-brass">{g.title}</Link>
         <FavoriteButton slug={g.slug} size="sm" />
       </div>
-      <span className="text-xs text-cream/40">on {base} · {g.plays} plays</span>
-      <p className="line-clamp-2 text-sm text-cream/60">{g.explanation}</p>
+      <span className="text-xs text-cream/80">on {base} · {g.plays} plays</span>
+      <p className="line-clamp-2 text-sm text-cream/80">{g.explanation}</p>
       <div className="mt-1">
         <ButtonLink href={`/game/${g.slug}`} size="md">Play →</ButtonLink>
       </div>
@@ -51,9 +51,9 @@ function GameCard({ g }: { g: LibGame }) {
 function ProfileSection({ title, games, empty }: { title: string; games: LibGame[]; empty: string }) {
   return (
     <section className="flex flex-col gap-3">
-      <h2 className="plaque-header text-sm text-brass/70">{title}</h2>
+      <h2 className="plaque-header text-sm text-brass">{title}</h2>
       {games.length === 0 ? (
-        <p className="text-sm text-cream/40">{empty}</p>
+        <p className="text-sm text-cream/80">{empty}</p>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2">
           {games.map((g) => (
@@ -93,13 +93,13 @@ function ProfileBody({ id, isMe }: { id: string; isMe: boolean }) {
   }
 
   if (profile === undefined) {
-    return <p className="text-center text-cream/50">Pulling their record…</p>;
+    return <p className="text-center text-cream/80" role="status">Pulling their record…</p>;
   }
   if (profile === null) {
     return (
       <div className="flex flex-col items-center gap-4 py-16 text-center">
         <p className="font-display text-4xl text-brass">No profile yet</p>
-        <p className="max-w-sm text-cream/60">{isMe ? "Invent or favorite a game and your profile fills in." : "This player hasn't made their mark yet."}</p>
+        <p className="max-w-sm text-cream/80">{isMe ? "Invent or favorite a game and your profile fills in." : "This player hasn't made their mark yet."}</p>
         <ButtonLink href="/invent" size="lg">Invent a game</ButtonLink>
       </div>
     );
@@ -108,7 +108,7 @@ function ProfileBody({ id, isMe }: { id: string; isMe: boolean }) {
   return (
     <>
       <section className="flex flex-col items-center gap-3 text-center">
-        <div className="grid h-20 w-20 place-items-center rounded-full bg-felt-dark text-2xl font-semibold text-cream ring-2 ring-brass/60">
+        <div className="grid h-20 w-20 place-items-center rounded-full bg-felt-dark text-2xl font-semibold text-cream ring-2 ring-brass" aria-hidden>
           {initials(profile.name ?? "Player")}
         </div>
         {isMe ? (
@@ -117,16 +117,16 @@ function ProfileBody({ id, isMe }: { id: string; isMe: boolean }) {
           <h1 className="font-display text-3xl text-cream">{profile.name ?? "Anonymous player"}</h1>
         )}
         {profile.createdAt && (
-          <p className="text-xs text-cream/40">
+          <p className="text-xs text-cream/80">
             Joined {new Date(profile.createdAt + "Z").toLocaleDateString(undefined, { month: "long", year: "numeric" })}
           </p>
         )}
-        <button onClick={share} className="text-xs text-cream/50 underline hover:text-brass">
-          {copied ? "Link copied ✓" : "Share this profile"}
+        <button type="button" onClick={share} className="min-h-6 text-xs text-cream/80 underline hover:text-brass" aria-live="polite">
+          {copied ? "Link copied" : "Share this profile"}
         </button>
       </section>
 
-      <section className="grid grid-cols-3 gap-3">
+      <section className="grid grid-cols-3 gap-3" aria-label="Profile stats">
         {[
           { label: "Games made", value: profile.createdGames.length },
           { label: "Favorites", value: profile.favorites.length },
@@ -134,7 +134,7 @@ function ProfileBody({ id, isMe }: { id: string; isMe: boolean }) {
         ].map((s) => (
           <div key={s.label} className="felt-panel flex flex-col items-center rounded-xl py-4">
             <span className="tabular font-display text-3xl text-brass">{s.value}</span>
-            <span className="text-xs text-cream/50">{s.label}</span>
+            <span className="text-xs text-cream/80">{s.label}</span>
           </div>
         ))}
       </section>
@@ -152,7 +152,7 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
   return (
     <>
       <SiteHeader />
-      <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-5 pb-16 pt-4 sm:px-8">
+      <main id="main-content" tabIndex={-1} className="outline-none mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-5 pb-16 pt-4 sm:px-8">
         <ProfileBody key={id} id={id} isMe={isMe} />
       </main>
       <SiteFooter />

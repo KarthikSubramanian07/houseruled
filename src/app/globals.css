@@ -101,6 +101,28 @@ body::before {
   border-radius: 4px;
 }
 
+/* Skip link: visually hidden until focused so keyboard users can jump past the nav. */
+.skip-link {
+  position: absolute;
+  left: 1rem;
+  top: 0;
+  z-index: 100;
+  translate: 0 -120%;
+  border-radius: 999px;
+  background: var(--color-brass);
+  color: var(--color-felt-deep);
+  padding: 0.6rem 1.1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: translate 120ms var(--ease-card);
+}
+.skip-link:focus {
+  translate: 0 0.75rem;
+  outline: 2px solid var(--color-brass-bright);
+  outline-offset: 2px;
+}
+
 ::selection {
   background: color-mix(in oklab, var(--color-brass) 45%, transparent);
   color: var(--color-cream);
@@ -222,31 +244,14 @@ body::before {
   animation: deal-in 260ms var(--ease-card) both;
 }
 
-/* A quiet brass pulse on the active player's seat - signals turn without shouting. */
-@keyframes turn-pulse {
-  0%,
-  100% {
-    box-shadow: 0 0 0 0 color-mix(in oklab, var(--color-brass) 55%, transparent);
-  }
-  50% {
-    box-shadow: 0 0 0 5px color-mix(in oklab, var(--color-brass) 0%, transparent);
-  }
-}
+/* Active-turn cue: a static brass ring (no looping motion — WCAG 2.2.2). */
 .turn-pulse {
-  animation: turn-pulse 2.2s var(--ease-card) infinite;
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-brass) 55%, transparent);
 }
 
-/* Playable cards breathe up a hair; the felt stays calm around them. */
-@keyframes card-rise {
-  from {
-    translate: 0 3px;
-  }
-  to {
-    translate: 0 -2px;
-  }
-}
+/* Playable cards lift once on deal-in; no continuous motion. */
 .card-playable {
-  animation: card-rise 1.8s var(--ease-card) infinite alternate;
+  translate: 0 -2px;
 }
 
 @media (prefers-reduced-motion: reduce) {

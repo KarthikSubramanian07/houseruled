@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Fraunces, Inter } from "next/font/google";
 import { AdSenseScript } from "@/components/AdSense";
+import { SkipLink } from "@/components/SkipLink";
 import { SITE_URL } from "@/lib/env";
 import { structuredData } from "@/agent/jsonld";
 import "./globals.css";
@@ -121,6 +122,7 @@ export default function RootLayout({
             paddingBottom: "env(safe-area-inset-bottom)",
           }}
         >
+          <SkipLink />
           {children}
         </div>
         <AdSenseScript />
