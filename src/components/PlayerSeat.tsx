@@ -9,24 +9,31 @@ function initials(name: string): string {
 export function PlayerSeat({ player }: { player: SeatedPlayer | null }) {
   if (!player) {
     return (
-      <div className="flex w-24 flex-col items-center gap-1.5 text-center">
+      <div className="flex w-24 flex-col items-center gap-1.5 text-center" aria-label="Open seat">
         <div
           aria-hidden
-          className="grid h-12 w-12 place-items-center rounded-full border border-dashed border-cream/25 text-cream/30"
+          className="grid h-12 w-12 place-items-center rounded-full border border-dashed border-cream/40 text-cream/60"
         >
           <span className="text-xl leading-none">+</span>
         </div>
-        <span className="text-xs text-cream/35">open seat</span>
+        <span className="text-xs text-cream/75">open seat</span>
       </div>
     );
   }
 
+  const label = [
+    player.name,
+    player.isHost ? "host" : null,
+    player.isSelf ? "you" : null,
+  ].filter(Boolean).join(", ");
+
   return (
-    <div className="deal-in flex w-24 flex-col items-center gap-1.5 text-center">
+    <div className="deal-in flex w-24 flex-col items-center gap-1.5 text-center" aria-label={label}>
       <div className="relative">
         <div
-          className="grid h-12 w-12 place-items-center rounded-full bg-felt-dark text-sm font-semibold text-cream shadow-md ring-2 ring-brass/70"
+          className="grid h-12 w-12 place-items-center rounded-full bg-felt-dark text-sm font-semibold text-cream shadow-md ring-2 ring-brass"
           title={player.name}
+          aria-hidden
         >
           {initials(player.name)}
         </div>
@@ -34,17 +41,17 @@ export function PlayerSeat({ player }: { player: SeatedPlayer | null }) {
           <span
             className="absolute -right-1 -top-1 grid h-5 w-5 place-items-center rounded-full bg-brass text-[10px] text-felt-deep shadow"
             title="Host"
-            aria-label="Host"
+            aria-hidden
           >
             ★
           </span>
         )}
       </div>
-      <span className="max-w-24 truncate text-xs font-medium text-cream">
+      <span className="max-w-24 truncate text-xs font-medium text-cream" aria-hidden>
         {player.name}
       </span>
       {player.isSelf && (
-        <span className="rounded-full bg-brass/15 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-brass-bright">
+        <span className="rounded-full bg-brass/15 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-brass-bright" aria-hidden>
           you
         </span>
       )}

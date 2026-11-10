@@ -68,24 +68,31 @@ export function InventGame() {
     <div className="mx-auto flex w-full max-w-xl flex-col gap-5">
       <div className="text-center">
         <h1 className="font-display text-4xl text-cream">Invent a game</h1>
-        <p className="mt-2 text-sm text-cream/60">
+        <p className="mt-2 text-sm text-cream/80">
           Describe a card game in a sentence. The AI builds it on one of the five engine games and writes the rules.
         </p>
       </div>
 
       <div className="flex flex-col gap-2">
+        <label htmlFor="invent-desc" className="sr-only">Describe your card game</label>
         <textarea
+          id="invent-desc"
           value={desc}
           onChange={(e) => setDesc(e.target.value)}
           rows={3}
           maxLength={400}
           placeholder="e.g. Crazy Eights but twos attack, queens turn the tables, and sevens let you go again"
-          className="felt-panel w-full rounded-2xl px-4 py-3 text-sm text-cream placeholder:text-cream/30"
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? "invent-error" : undefined}
+          className="felt-panel w-full rounded-2xl px-4 py-3 text-sm text-cream placeholder:text-cream/50"
         />
-        <Button size="lg" disabled={loading || desc.trim().length < 4} onClick={generate}>
+        <Button size="lg" disabled={loading || desc.trim().length < 4} onClick={generate} aria-busy={loading}>
           {loading ? "Designing…" : "Design my game"}
         </Button>
-        {error && <p className="text-center text-sm text-ember">{error}</p>}
+        <div className="sr-only" aria-live="polite">
+          {loading ? "Designing your game…" : ""}
+        </div>
+        {error && <p id="invent-error" role="alert" className="text-center text-sm text-ember">{error}</p>}
       </div>
 
       {game && (

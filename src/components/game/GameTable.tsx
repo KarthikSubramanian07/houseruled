@@ -63,8 +63,21 @@ export function GameTable({
 
       {/* Log ticker - the game's play-by-play; the one bit of narration each turn. */}
       {view.log.length > 0 && (
-        <p className="text-center text-xs text-cream/70">{view.log[view.log.length - 1]}</p>
+        <p className="text-center text-xs text-cream/80" role="status" aria-live="polite" aria-atomic="true">
+          {view.log[view.log.length - 1]}
+        </p>
       )}
+
+      {/* Off-screen live region: turns, scores, and outcomes for screen readers. */}
+      <div className="sr-only" aria-live="polite" aria-atomic="true">
+        {view.status.over
+          ? `Game over. ${view.status.message ?? ""}${view.status.winners.includes(view.you) ? " You won." : ""}`
+          : myTurn
+            ? "Your move."
+            : view.turn
+              ? `Waiting on ${view.players.find((p) => p.id === view.turn)?.name ?? "another player"}.`
+              : ""}
+      </div>
 
       {/* Your hand + actions */}
       <div className="flex flex-col items-center gap-4">
@@ -87,7 +100,7 @@ export function GameTable({
         {/* The custom-control games print their own turn state, so only the generic
             hand/action path shows this line - no double "Waiting…". */}
         {!CUSTOM_CONTROLS.has(view.type) && (
-          <p className="text-xs text-cream/55">
+          <p className="text-xs text-cream/80" aria-hidden>
             {myTurn ? "Your move." : view.turn ? `Waiting on ${view.players.find((p) => p.id === view.turn)?.name ?? "…"}.` : ""}
           </p>
         )}
@@ -149,20 +162,22 @@ function RulesBar({
       {isHost && supportsAI && !view.status.over &&
         (adding ? (
           <div className="flex w-full max-w-sm flex-wrap items-center justify-center gap-2">
+            <label htmlFor="live-rule" className="sr-only">Add a house rule in plain English</label>
             <input
+              id="live-rule"
               value={text}
               onChange={(e) => setText(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && submit()}
               autoFocus
               placeholder="e.g. tens skip the next player"
               maxLength={200}
-              className="felt-panel min-w-0 flex-1 rounded-full px-3 py-1 text-xs text-cream placeholder:text-cream/30"
+              className="felt-panel min-h-8 min-w-0 flex-1 rounded-full px-3 py-1 text-xs text-cream placeholder:text-cream/50"
             />
-            <button onClick={submit} className="text-xs text-brass hover:text-brass-bright">Add</button>
-            <button onClick={() => setAdding(false)} className="text-xs text-cream/40">cancel</button>
+            <button type="button" onClick={submit} className="min-h-6 text-xs text-brass hover:text-brass-bright">Add</button>
+            <button type="button" onClick={() => setAdding(false)} className="min-h-6 text-xs text-cream/80">cancel</button>
           </div>
         ) : (
-          <button onClick={() => setAdding(true)} className="text-xs text-cream/45 transition-colors hover:text-brass">
+          <button type="button" onClick={() => setAdding(true)} className="min-h-6 text-xs text-cream/80 transition-colors hover:text-brass">
             ✦ add a house rule (plain English)
           </button>
         ))}
@@ -176,17 +191,24 @@ function OpponentBadge({ p, type }: { p: PlayerPublic; type: string }) {
   const books = p.extra?.books as number | undefined;
   const result = p.extra?.result as string | undefined;
   return (
-    <div className={`flex w-32 flex-col items-center gap-1.5 rounded-xl px-2 py-2 text-center ${p.isTurn ? "bg-brass/10 ring-1 ring-brass/50" : ""}`}>
-      <div className={`grid h-11 w-11 place-items-center rounded-full bg-felt-dark text-sm font-semibold text-cream ring-2 ${p.isTurn ? "ring-brass-bright turn-pulse" : "ring-brass/50"} ${p.out ? "opacity-40" : ""}`}>
+    <div
+      className={`flex w-32 flex-col items-center gap-1.5 rounded-xl px-2 py-2 text-center ${p.isTurn ? "bg-brass/10 ring-1 ring-brass/50" : ""}`}
+      aria-label={`${p.name}${p.isTurn ? ", their turn" : ""}${p.out ? ", out" : ""}`}
+    >
+      <div
+        aria-hidden
+        className={`grid h-11 w-11 place-items-center rounded-full bg-felt-dark text-sm font-semibold text-cream ring-2 ${p.isTurn ? "ring-brass-bright turn-pulse" : "ring-brass/50"} ${p.out ? "opacity-40" : ""}`}
+      >
         {initials(p.name)}
       </div>
-      <span className="max-w-32 truncate text-xs font-medium text-cream">{p.name}</span>
+      <span className="max-w-32 truncate text-xs font-medium text-cream" aria-hidden>{p.name}</span>
+      {p.isTurn && <span className="text-[10px] font-medium uppercase tracking-wide text-brass">Turn</span>}
       {type === "blackjack" && bjCards ? (
         <div className="flex items-center gap-0.5">
           {bjCards.map((c, i) => <PlayingCard key={i} card={c} size="sm" />)}
         </div>
       ) : (
-        <span className="tabular text-xs text-cream/50">{p.handCount} cards</span>
+        <span className="tabular text-xs text-cream/80">{p.handCount} cards</span>
       )}
       {type === "blackjack" && p.extra?.total != null && (
         <span className="tabular text-xs text-brass">{String(p.extra.total)}{result ? ` · ${result}` : ""}</span>
@@ -1187,7 +1209,48 @@ function EndOverlay({
     return lines[Math.floor(Math.random() * lines.length)];
   });
   const panelRef = useRef<HTMLDivElement>(null);
-  useEffect(() => { panelRef.current?.focus(); }, []);
+  useEffect(() => {
+    const panel = panelRef.current;
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+    panel?.focus();
+
+    function focusables() {
+      if (!panel) return [] as HTMLElement[];
+      return [...panel.querySelectorAll<HTMLElement>("button, [href], input, select, textarea, [tabindex]:not([tabindex=\"-1\"])")]
+        .filter((el) => !el.hasAttribute("disabled"));
+    }
+
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape" && isHost) {
+        e.preventDefault();
+        onBackToLobby();
+        return;
+      }
+      if (e.key !== "Tab" || !panel) return;
+      const items = focusables();
+      if (items.length === 0) {
+        e.preventDefault();
+        panel.focus();
+        return;
+      }
+      const first = items[0];
+      const last = items[items.length - 1];
+      const active = document.activeElement as HTMLElement | null;
+      if (e.shiftKey && (active === first || active === panel)) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && active === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
+
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      previouslyFocused?.focus?.();
+    };
+  }, [isHost, onBackToLobby]);
   return (
     <div className="fixed inset-0 z-30 grid place-items-center bg-felt-deep/80 px-6 backdrop-blur-sm">
       <div
@@ -1200,14 +1263,14 @@ function EndOverlay({
       >
         {won && <p className="font-display text-2xl text-brass" aria-hidden>🏆</p>}
         <p className="font-display text-3xl leading-tight text-cream">{message}</p>
-        <p className="-mt-1 text-sm italic text-cream/55">{flavor}</p>
+        <p className="-mt-1 text-sm italic text-cream/80">{flavor}</p>
         {isHost ? (
           <div className="mt-2 flex flex-col gap-2">
             <Button size="lg" onClick={onRematch}>Rematch</Button>
             <Button variant="quiet" onClick={onBackToLobby}>Back to lobby</Button>
           </div>
         ) : (
-          <p className="text-sm text-cream/55">Waiting for the host to deal again…</p>
+          <p className="text-sm text-cream/80" role="status">Waiting for the host to deal again…</p>
         )}
       </div>
     </div>
