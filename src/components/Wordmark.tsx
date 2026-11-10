@@ -32,7 +32,7 @@ export function Wordmark({
 
   if (!asLink) return mark;
   return (
-    <Link href="/" className="inline-flex items-center no-underline">
+    <Link href="/" className="inline-flex items-center no-underline" aria-label="Houseruled home">
       {mark}
     </Link>
   );

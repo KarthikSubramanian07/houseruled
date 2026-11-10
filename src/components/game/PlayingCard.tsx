@@ -44,11 +44,26 @@ export function PlayingCard({
 
   // Keyboard operability: a clickable card is a real button - reachable by Tab and
   // activated with Enter/Space, so every game is playable without a mouse.
+  const name = faceDown || !card
+    ? (onClick ? "Draw a face-down card" : "Face-down card")
+    : card.j
+      ? "Joker"
+      : `${RANK_LABEL[card.r]} of ${SUIT_NAME[card.s]}`;
+  const stateBits = [
+    selected ? "selected" : null,
+    highlight ? "playable" : null,
+    dimmed ? "not playable" : null,
+  ].filter(Boolean);
+  const label = stateBits.length ? `${name}, ${stateBits.join(", ")}` : name;
+
   const a11y = onClick
     ? {
         role: "button" as const,
         tabIndex: 0,
+        "aria-pressed": selected || undefined,
+        "aria-disabled": dimmed || undefined,
         onKeyDown: (e: KeyboardEvent) => {
+          if (dimmed) return;
           if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(); }
         },
       }
@@ -60,7 +75,7 @@ export function PlayingCard({
         onClick={onClick}
         style={style}
         className={`card-back deal-in shadow-lg transition-transform ${base} ${interactive} ${lift} ${dim} ${ring}`}
-        aria-label={onClick ? "Draw a face-down card" : "Face-down card"}
+        aria-label={label}
         {...a11y}
       />
     );
@@ -72,11 +87,11 @@ export function PlayingCard({
         onClick={onClick}
         style={style}
         className={`deal-in flex flex-col items-center justify-center gap-1 bg-cream p-1.5 shadow-lg transition-transform ${base} ${interactive} ${lift} ${dim} ${ring} ${highlight ? "card-playable" : ""}`}
-        aria-label="Joker"
+        aria-label={label}
         {...a11y}
       >
-        <span className="font-display text-xl leading-none text-brass">★</span>
-        <span className="font-display text-[0.6em] uppercase tracking-widest text-ink/70">Joker</span>
+        <span className="font-display text-xl leading-none text-brass" aria-hidden>★</span>
+        <span className="font-display text-[0.6em] uppercase tracking-widest text-ink/70" aria-hidden>Joker</span>
       </div>
     );
   }
@@ -87,7 +102,7 @@ export function PlayingCard({
       onClick={onClick}
       style={style}
       className={`deal-in flex flex-col justify-between bg-cream p-1.5 shadow-lg transition-transform ${base} ${interactive} ${lift} ${dim} ${ring} ${highlight ? "card-playable" : ""}`}
-      aria-label={`${RANK_LABEL[card.r]} of ${SUIT_NAME[card.s]}`}
+      aria-label={label}
       {...a11y}
     >
       <span className={`font-display font-semibold leading-none ${color}`}>

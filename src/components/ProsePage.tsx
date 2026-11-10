@@ -45,10 +45,10 @@ function BlockView({ block }: { block: Block }) {
     case "h3":
       return <h3 className="mt-2 font-display text-lg text-brass">{block.text}</h3>;
     case "p":
-      return <p className="leading-relaxed text-cream/75">{renderInline(block.text)}</p>;
+      return <p className="leading-relaxed text-cream/85">{renderInline(block.text)}</p>;
     case "ul":
       return (
-        <ul className="flex flex-col gap-2 pl-5 text-cream/75 marker:text-brass/70 [list-style:disc]">
+        <ul className="flex flex-col gap-2 pl-5 text-cream/85 marker:text-brass [list-style:disc]">
           {block.items.map((item, i) => (
             <li key={i} className="leading-relaxed">{renderInline(item)}</li>
           ))}
@@ -56,7 +56,12 @@ function BlockView({ block }: { block: Block }) {
       );
     case "code":
       return (
-        <pre className="felt-panel overflow-x-auto rounded-xl p-4 font-mono text-xs leading-relaxed text-cream/85">
+        <pre
+          tabIndex={0}
+          role="region"
+          aria-label="Code sample"
+          className="felt-panel overflow-x-auto rounded-xl p-4 font-mono text-xs leading-relaxed text-cream/90"
+        >
           <code>{block.text}</code>
         </pre>
       );
@@ -67,9 +72,9 @@ export function ProsePage({ doc }: { doc: SiteDoc }) {
   return (
     <>
       <SiteHeader />
-      <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-4 px-5 pb-16 pt-4 sm:px-8">
+      <main id="main-content" tabIndex={-1} className="outline-none mx-auto flex w-full max-w-2xl flex-1 flex-col gap-4 px-5 pb-16 pt-4 sm:px-8">
         <h1 className="font-display text-4xl leading-tight text-cream sm:text-5xl">{doc.heading}</h1>
-        <p className="text-lg leading-relaxed text-cream/70">{renderInline(doc.lede)}</p>
+        <p className="text-lg leading-relaxed text-cream/85">{renderInline(doc.lede)}</p>
         {doc.blocks.map((b, i) => (
           <BlockView key={i} block={b} />
         ))}

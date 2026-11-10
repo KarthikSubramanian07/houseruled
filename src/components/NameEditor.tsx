@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { getPlayerSecret } from "@/lib/identity";
 import { renamePlayer, usePlayer } from "@/lib/use-player";
 
@@ -13,6 +13,7 @@ export function NameEditor({ onChange }: { onChange?: (name: string) => void }) 
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
   const syncedRef = useRef(false);
+  const inputId = useId();
 
   useEffect(() => {
     if (syncedRef.current || synced) return;
@@ -39,7 +40,9 @@ export function NameEditor({ onChange }: { onChange?: (name: string) => void }) 
   if (editing) {
     return (
       <span className="inline-flex items-center gap-1.5">
+        <label htmlFor={inputId} className="sr-only">Your display name</label>
         <input
+          id={inputId}
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" ? save() : e.key === "Escape" ? setEditing(false) : null}
@@ -47,19 +50,21 @@ export function NameEditor({ onChange }: { onChange?: (name: string) => void }) 
           maxLength={24}
           className="w-32 rounded-full bg-felt-dark/70 px-3 py-1 text-sm text-cream ring-1 ring-brass/40"
         />
-        <button onClick={save} className="text-xs text-brass hover:text-brass-bright">save</button>
+        <button type="button" onClick={save} className="min-h-6 text-xs text-brass hover:text-brass-bright">save</button>
       </span>
     );
   }
   return (
     <button
+      type="button"
       onClick={() => { setDraft(player.name); setEditing(true); }}
-      className="group inline-flex items-center gap-1.5 text-sm text-cream/70 transition-colors hover:text-cream"
+      className="group inline-flex min-h-6 items-center gap-1.5 text-sm text-cream/85 transition-colors hover:text-cream"
       title="Change your name"
+      aria-label={`playing as ${player.name || "…"}. Change your name`}
     >
-      <span className="text-cream/45">playing as</span>
-      <span className="font-medium text-cream">{player.name || "…"}</span>
-      <span className="text-cream/30 group-hover:text-brass">✎</span>
+      <span className="text-cream/75" aria-hidden>playing as</span>
+      <span className="font-medium text-cream" aria-hidden>{player.name || "…"}</span>
+      <span className="text-cream/60 group-hover:text-brass" aria-hidden>✎</span>
     </button>
   );
 }

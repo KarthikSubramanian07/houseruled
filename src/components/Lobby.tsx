@@ -35,17 +35,17 @@ function CopyButton({ value, label }: { value: string; label: string }) {
 }
 
 const STATUS_STYLES: Record<ChannelStatus, { dot: string; text: string }> = {
-  connecting: { dot: "bg-brass animate-pulse", text: "Connecting…" },
+  connecting: { dot: "bg-brass", text: "Connecting…" },
   connected: { dot: "bg-brass-bright", text: "Live" },
-  demo: { dot: "bg-cream/40", text: "Table demo" },
+  demo: { dot: "bg-cream/70", text: "Table demo" },
   error: { dot: "bg-ember", text: "Reconnecting…" },
 };
 
 function StatusPill({ status }: { status: ChannelStatus }) {
   const s = STATUS_STYLES[status];
   return (
-    <span className="inline-flex items-center gap-2 text-xs text-cream/55">
-      <span className={`h-2 w-2 rounded-full ${s.dot}`} />
+    <span className="inline-flex items-center gap-2 text-xs text-cream/80" role="status" aria-live="polite">
+      <span className={`h-2 w-2 rounded-full ${s.dot}`} aria-hidden />
       {s.text}
     </span>
   );
@@ -55,8 +55,8 @@ export function Lobby({ code }: { code: string }) {
   const player = usePlayer();
   if (!player.id) {
     return (
-      <main className="flex flex-1 items-center justify-center px-6">
-        <p className="font-display text-2xl text-cream/60">Pulling up a chair…</p>
+      <main id="main-content" tabIndex={-1} className="outline-none flex flex-1 items-center justify-center px-6">
+        <p className="font-display text-2xl text-cream/80" role="status">Pulling up a chair…</p>
       </main>
     );
   }
@@ -126,7 +126,7 @@ function LobbySession({ code, playerId, playerName }: { code: string; playerId: 
 
   if (lookupFailed) {
     return (
-      <main className="flex flex-1 flex-col items-center justify-center gap-6 px-6 text-center">
+      <main id="main-content" tabIndex={-1} className="outline-none flex flex-1 flex-col items-center justify-center gap-6 px-6 text-center">
         <p className="font-display text-5xl text-brass">Trouble reaching the table</p>
         <p className="max-w-sm text-cream/70">
           We couldn&apos;t look up table{" "}
@@ -139,7 +139,7 @@ function LobbySession({ code, playerId, playerName }: { code: string; playerId: 
   }
   if (room === null) {
     return (
-      <main className="flex flex-1 flex-col items-center justify-center gap-6 px-6 text-center">
+      <main id="main-content" tabIndex={-1} className="outline-none flex flex-1 flex-col items-center justify-center gap-6 px-6 text-center">
         <p className="font-display text-5xl text-brass">No table here</p>
         <p className="max-w-sm text-cream/70">
           Nobody&apos;s dealt a game at{" "}
@@ -152,8 +152,8 @@ function LobbySession({ code, playerId, playerName }: { code: string; playerId: 
   }
   if (room === undefined) {
     return (
-      <main className="flex flex-1 items-center justify-center px-6">
-        <p className="font-display text-2xl text-cream/60">Pulling up a chair…</p>
+      <main id="main-content" tabIndex={-1} className="outline-none flex flex-1 items-center justify-center px-6">
+        <p className="font-display text-2xl text-cream/80" role="status">Pulling up a chair…</p>
       </main>
     );
   }
@@ -172,7 +172,7 @@ function LobbySession({ code, playerId, playerName }: { code: string; playerId: 
         <Wordmark size="sm" />
         <div className="flex items-center gap-4">
           <NameEditor onChange={(n) => channelRef.current?.setName(n)} />
-          <Link href="/" className="text-sm text-cream/55 no-underline transition-colors hover:text-cream">
+          <Link href="/" className="text-sm text-cream/80 no-underline transition-colors hover:text-cream">
             Leave table
           </Link>
         </div>
@@ -190,7 +190,7 @@ function LobbySession({ code, playerId, playerName }: { code: string; playerId: 
       )}
 
       {game ? (
-        <main className="flex flex-1 flex-col gap-6 px-4 pb-16 pt-2 sm:px-8">
+        <main id="main-content" tabIndex={-1} className="outline-none flex flex-1 flex-col gap-6 px-4 pb-16 pt-2 sm:px-8">
           <GameTable
             view={game}
             isHost={isHost}
@@ -201,11 +201,11 @@ function LobbySession({ code, playerId, playerName }: { code: string; playerId: 
           />
         </main>
       ) : (
-        <main className="flex flex-1 flex-col gap-10 px-5 pb-16 sm:px-8">
+        <main id="main-content" tabIndex={-1} className="outline-none flex flex-1 flex-col gap-10 px-5 pb-16 sm:px-8">
           <section className="flex flex-col items-center gap-4 text-center">
             <div className="flex flex-col items-center gap-1">
-              <span className="text-xs uppercase tracking-[0.3em] text-cream/45">Table code</span>
-              <span className="tabular font-display text-6xl font-semibold tracking-[0.2em] text-brass sm:text-7xl">
+              <span className="text-xs uppercase tracking-[0.3em] text-cream/75">Table code</span>
+              <span className="tabular font-display text-6xl font-semibold tracking-[0.2em] text-brass sm:text-7xl" aria-label={`Table code ${code.split("").join(" ")}`}>
                 {code}
               </span>
             </div>
@@ -216,10 +216,10 @@ function LobbySession({ code, playerId, playerName }: { code: string; playerId: 
             <StatusPill status={status} />
           </section>
 
-          <section className="mx-auto flex w-full max-w-5xl flex-col items-center gap-10 lg:flex-row lg:items-start lg:justify-center">
+          <section className="mx-auto flex w-full max-w-5xl flex-col items-center gap-10 lg:flex-row lg:items-start lg:justify-center" aria-label="Table and house rules">
             <div className="w-full flex-1">
               <FeltTable players={players} />
-              <p className="mt-2 text-center text-sm text-cream/50">
+              <p className="mt-2 text-center text-sm text-cream/80" aria-live="polite">
                 {players.length === 1 ? "You're the only one at the table." : `${players.length} players at the table.`}
               </p>
             </div>

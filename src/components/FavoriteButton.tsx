@@ -40,9 +40,9 @@ export function FavoriteButton({ slug, initial = false, size = "md" }: { slug: s
       aria-pressed={fav}
       aria-label={fav ? "Remove from favorites" : "Add to favorites"}
       title={fav ? "Favorited" : "Add to favorites"}
-      className={`transition-transform hover:scale-110 ${size === "sm" ? "text-base" : "text-xl"} ${fav ? "text-ember" : "text-cream/30 hover:text-cream/60"}`}
+      className={`grid min-h-6 min-w-6 place-items-center transition-transform hover:scale-110 ${size === "sm" ? "text-base" : "text-xl"} ${fav ? "text-ember" : "text-cream/70 hover:text-cream"}`}
     >
-      {fav ? "♥" : "♡"}
+      <span aria-hidden>{fav ? "♥" : "♡"}</span>
     </button>
   );
 }

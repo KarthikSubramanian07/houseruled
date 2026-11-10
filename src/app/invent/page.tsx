@@ -15,7 +15,7 @@ export default function InventPage() {
   return (
     <>
       <SiteHeader />
-      <main className="flex flex-1 flex-col px-5 pb-16 pt-4 sm:px-8">
+      <main id="main-content" tabIndex={-1} className="outline-none flex flex-1 flex-col px-5 pb-16 pt-4 sm:px-8">
         <InventGame />
       </main>
       <SiteFooter />

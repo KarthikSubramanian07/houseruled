@@ -53,10 +53,10 @@ export default function GamesPage() {
   return (
     <>
       <SiteHeader />
-      <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-5 pb-16 pt-4 sm:px-8">
+      <main id="main-content" tabIndex={-1} className="outline-none mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-5 pb-16 pt-4 sm:px-8">
         <div className="text-center">
           <h1 className="font-display text-4xl text-cream">The community library</h1>
-          <p className="mt-2 text-sm text-cream/60">Games dreamed up by players. Steal them, remix them, make them yours.</p>
+          <p className="mt-2 text-sm text-cream/80">Games dreamed up by players. Steal them, remix them, make them yours.</p>
         </div>
 
         {/* Search + filters */}
@@ -66,26 +66,27 @@ export default function GamesPage() {
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search games…"
             aria-label="Search the community library"
-            className="felt-panel min-w-0 flex-1 rounded-full px-4 py-2 text-sm text-cream placeholder:text-cream/30"
+            className="felt-panel min-h-8 min-w-0 flex-1 rounded-full px-4 py-2 text-sm text-cream placeholder:text-cream/50"
           />
           <select
             value={base}
             onChange={(e) => setBase(e.target.value)}
             aria-label="Filter by base game"
-            className="felt-panel rounded-full px-3 py-2 text-sm text-cream"
+            className="felt-panel min-h-8 rounded-full px-3 py-2 text-sm text-cream"
           >
             <option value="">All base games</option>
             {GAME_CATALOG.filter((g) => INVENTABLE_BASES.has(g.type)).map((g) => (
               <option key={g.type} value={g.type}>{g.name}</option>
             ))}
           </select>
-          <div className="flex overflow-hidden rounded-full border border-brass/25 text-sm">
+          <div className="flex overflow-hidden rounded-full border border-brass/25 text-sm" role="group" aria-label="Sort library">
             {(["plays", "new"] as const).map((s) => (
               <button
                 key={s}
+                type="button"
                 onClick={() => setSort(s)}
                 aria-pressed={sort === s}
-                className={`px-4 py-2 transition-colors ${sort === s ? "bg-brass/20 text-brass" : "text-cream/50 hover:text-cream"}`}
+                className={`min-h-8 px-4 py-2 transition-colors ${sort === s ? "bg-brass/20 text-brass" : "text-cream/80 hover:text-cream"}`}
               >
                 {s === "plays" ? "Top" : "New"}
               </button>
@@ -94,10 +95,10 @@ export default function GamesPage() {
         </div>
 
         {games === null ? (
-          <p className="text-center text-cream/50">Shuffling the deck…</p>
+          <p className="text-center text-cream/80" role="status">Shuffling the deck…</p>
         ) : games.length === 0 ? (
           <div className="flex flex-col items-center gap-4 py-10 text-center">
-            <p className="text-cream/60">{search || base ? "Nothing matches - try a different search." : "No games yet - be the first to invent one."}</p>
+            <p className="text-cream/80" role="status">{search || base ? "Nothing matches - try a different search." : "No games yet - be the first to invent one."}</p>
             <ButtonLink href="/invent" size="lg">Invent a game</ButtonLink>
           </div>
         ) : (
@@ -107,15 +108,15 @@ export default function GamesPage() {
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-baseline gap-x-2">
                     <Link href={`/game/${g.slug}`} className="font-display text-lg text-cream no-underline hover:text-brass">{g.title}</Link>
-                    <span className="text-xs text-cream/40">
+                    <span className="text-xs text-cream/80">
                       on {GAME_CATALOG.find((c) => c.type === g.baseGame)?.name ?? g.baseGame}
                       {g.creatorName && g.creatorId && (
-                        <> · by <Link href={`/u/${g.creatorId}`} className="text-brass/70 no-underline hover:text-brass">{g.creatorName}</Link></>
+                        <> · by <Link href={`/u/${g.creatorId}`} className="text-brass no-underline hover:text-brass-bright">{g.creatorName}</Link></>
                       )}
                     </span>
                   </div>
-                  <p className="mt-0.5 line-clamp-2 text-sm text-cream/60">{g.explanation}</p>
-                  <p className="tabular mt-1 text-xs text-brass/70">{g.plays} plays</p>
+                  <p className="mt-0.5 line-clamp-2 text-sm text-cream/80">{g.explanation}</p>
+                  <p className="tabular mt-1 text-xs text-brass">{g.plays} plays</p>
                 </div>
                 <div className="flex shrink-0 flex-col items-end gap-2">
                   <FavoriteButton slug={g.slug} initial={favs.has(g.slug)} />

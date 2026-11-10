@@ -31,7 +31,7 @@ export function FeltTable({ players }: { players: SeatedPlayer[] }) {
   return (
     // Padding reserves room for the seats, which sit centered on the oval's edge
     // and would otherwise hang half-off the container (and scroll on mobile).
-    <div className="mx-auto w-full max-w-2xl px-12 py-12">
+    <div className="mx-auto w-full max-w-2xl px-12 py-12" role="group" aria-label={`Felt table with ${players.length} seated`}>
       {/* The oval rail - a raised felt table with a brass hairline and inner well. */}
       <div className="relative mx-auto aspect-4/3 w-full">
         <div
