@@ -8,7 +8,7 @@ export function DonateLink({ className = "" }: { className?: string }) {
       href={DONATE_URL}
       target="_blank"
       rel="noopener noreferrer"
-      className={`inline-flex items-center gap-1.5 text-sm text-cream/55 no-underline transition-colors hover:text-brass ${className}`}
+      className={`inline-flex min-h-6 items-center gap-1.5 text-sm text-cream/80 no-underline transition-colors hover:text-brass ${className}`}
     >
       <span aria-hidden>☕</span>
       Buy me a coffee

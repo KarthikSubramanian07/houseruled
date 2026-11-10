@@ -43,13 +43,13 @@ export function HomeActions() {
         {creating ? "Dealing you in…" : "Start a table"}
       </Button>
 
-      <div className="flex items-center gap-3 text-xs uppercase tracking-widest text-cream/40">
-        <span className="h-px flex-1 bg-cream/15" />
+      <div className="flex items-center gap-3 text-xs uppercase tracking-widest text-cream/75">
+        <span className="h-px flex-1 bg-cream/15" aria-hidden />
         or join one
-        <span className="h-px flex-1 bg-cream/15" />
+        <span className="h-px flex-1 bg-cream/15" aria-hidden />
       </div>
 
-      <form onSubmit={handleJoin} className="flex flex-col gap-3">
+      <form onSubmit={handleJoin} className="flex flex-col gap-3" aria-describedby={error ? "join-error" : undefined}>
         <label htmlFor="code" className="sr-only">
           Room code
         </label>
@@ -62,9 +62,14 @@ export function HomeActions() {
             spellCheck={false}
             placeholder="ENTER CODE"
             value={code}
-            onChange={(e) => setCode(normalizeCode(e.target.value))}
+            onChange={(e) => {
+              setCode(normalizeCode(e.target.value));
+              if (error) setError(null);
+            }}
             maxLength={CODE_LENGTH}
-            className="tabular felt-panel min-w-0 flex-1 rounded-full px-5 py-3.5 text-center font-display text-2xl tracking-[0.35em] text-cream placeholder:text-cream/25 placeholder:tracking-[0.2em] placeholder:text-base"
+            aria-invalid={error ? true : undefined}
+            aria-describedby={error ? "join-error" : undefined}
+            className="tabular felt-panel min-w-0 flex-1 rounded-full px-5 py-3.5 text-center font-display text-2xl tracking-[0.35em] text-cream placeholder:text-cream/50 placeholder:tracking-[0.2em] placeholder:text-base"
           />
           <Button
             type="submit"
@@ -78,7 +83,7 @@ export function HomeActions() {
       </form>
 
       {error && (
-        <p role="alert" className="text-center text-sm text-ember">
+        <p id="join-error" role="alert" className="text-center text-sm text-ember">
           {error}
         </p>
       )}

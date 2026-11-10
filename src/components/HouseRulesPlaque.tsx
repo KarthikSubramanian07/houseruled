@@ -23,7 +23,7 @@ export function HouseRulesPlaque({ rules = [] }: { rules?: HouseRule[] }) {
           <p className="font-display text-lg leading-snug text-ink">
             The house plays it straight.
           </p>
-          <p className="text-sm leading-relaxed text-ink/65">
+          <p className="text-sm leading-relaxed text-ink/80">
             No custom rules yet. Soon you&apos;ll be able to bend the game to your
             table - twos wild, queens reverse, loser deals. For now, it&apos;s by
             the book.

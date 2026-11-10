@@ -12,10 +12,10 @@ const LINKS = [
 export function SiteFooter() {
   return (
     <footer className="mt-auto flex flex-col items-center gap-3 px-6 pb-8 pt-6 text-center sm:px-10">
-      <p className="text-xs text-cream/35">Bring the deck. We&apos;ll keep the felt.</p>
+      <p className="text-xs text-cream/75">Bring the deck. We&apos;ll keep the felt.</p>
       <nav aria-label="Site" className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-xs">
         {LINKS.map((l) => (
-          <Link key={l.href} href={l.href} className="text-cream/40 no-underline transition-colors hover:text-cream">
+          <Link key={l.href} href={l.href} className="text-cream/80 no-underline transition-colors hover:text-cream">
             {l.label}
           </Link>
         ))}
