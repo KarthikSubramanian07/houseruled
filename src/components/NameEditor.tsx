@@ -60,10 +60,10 @@ export function NameEditor({ onChange }: { onChange?: (name: string) => void }) 
       onClick={() => { setDraft(player.name); setEditing(true); }}
       className="group inline-flex min-h-6 items-center gap-1.5 text-sm text-cream/85 transition-colors hover:text-cream"
       title="Change your name"
-      aria-label={`Change your name (currently ${player.name || "unset"})`}
+      aria-label={`playing as ${player.name || "…"}. Change your name`}
     >
-      <span className="text-cream/75">playing as</span>
-      <span className="font-medium text-cream">{player.name || "…"}</span>
+      <span className="text-cream/75" aria-hidden>playing as</span>
+      <span className="font-medium text-cream" aria-hidden>{player.name || "…"}</span>
       <span className="text-cream/60 group-hover:text-brass" aria-hidden>✎</span>
     </button>
   );
