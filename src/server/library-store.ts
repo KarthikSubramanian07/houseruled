@@ -117,8 +117,9 @@ export class LibraryStore {
   }
 
   /**
-   * Replace the library's contents with `snapshot`, in one transaction. Running
-   * it again with the same input leaves the same rows, so it is safe to repeat.
+   * Replace the library's contents with `snapshot` (as returned by snapshot()),
+   * in one transaction. Running it again with the same input leaves the same
+   * rows, so it is safe to repeat.
    */
   replaceAll(snapshot: Partial<Record<string, TableRows>>): Record<LibraryTable, number> {
     for (const table of Object.keys(snapshot)) {

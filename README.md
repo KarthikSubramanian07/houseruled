@@ -9,7 +9,7 @@ Bring the deck, bring your house rules - no app store, no account, no catch.
 
 **[▶ Play at playhouseruled.pages.dev](https://playhouseruled.pages.dev)**
 
-`card-games` · `multiplayer` · `house-rules` · `nextjs` · `cloudflare-workers` · `durable-objects` · `d1` · `mcp`
+`card-games` · `multiplayer` · `house-rules` · `nextjs` · `cloudflare-workers` · `durable-objects` · `sqlite` · `mcp`
 
 </div>
 
@@ -79,7 +79,7 @@ Save it to the **community library** and share a `/game/<slug>` link.
 
 ### Library, sharing & the table (Phase 5)
 
-A D1-backed community library (browse, most-played), shareable game links,
+A community library (browse, most-played), shareable game links,
 live **table chat**, spectators (late joiners watch), and reconnect-safe rooms
 (state lives in the Durable Object). Optional accounts and still more games
 (real-time Speed/Egyptian Ratscrew, solo Solitaire, Pinochle, …) are the next
@@ -91,7 +91,7 @@ things on deck.
 | :---- | :------ | :------------ |
 | App + hosting | **Cloudflare Workers** (via OpenNext) | Generous free tier, global edge |
 | Live rooms + authoritative games | **Durable Objects** + WebSockets | One DO *is* a room; SQLite-backed DOs are on the free plan, and hibernation means idle rooms cost nothing |
-| Community library | **Cloudflare D1** (SQLite) | 5 GB free - a *lot* of saved games |
+| Community library | **A SQLite Durable Object** (`LibraryDO`) | Lives in the Worker itself - no database to create, bind, or migrate |
 | AI rule cache | **Cloudflare KV** | Common rules hit the model once, ever |
 | AI rules + game design | **Groq** (Llama 3.3 70B) | Free, no card required |
 
@@ -161,10 +161,6 @@ First-time setup:
 ```bash
 wrangler login                                   # once
 
-# Library (saved custom games)
-wrangler d1 create houseruled                    # paste the id into wrangler.jsonc → d1_databases
-wrangler d1 migrations apply houseruled --remote
-
 # AI rules + game design (Phase 3/4)
 wrangler kv namespace create RULE_CACHE          # paste the id into wrangler.jsonc → kv_namespaces
 echo "gsk_your_groq_key" | wrangler secret put GROQ_API_KEY   # free at console.groq.com
@@ -189,6 +185,32 @@ cd proxy && npx wrangler pages deploy --branch main
 > The `GROQ_API_KEY` is a **Worker secret** - it stays server-side and never
 > reaches the browser. AI calls happen in route handlers and the Durable Object.
 
+## The library database
+
+Saved games, public profiles, favorites, and per-player write auth live in one
+SQLite-backed Durable Object, `LibraryDO` (the instance named `library`). There
+is nothing to provision: the first deploy creates it, and it builds its own
+schema from the versioned migrations in
+[`src/server/library-migrations.ts`](src/server/library-migrations.ts) - to
+change the schema, append a migration there.
+
+The app queries it through `env.DB`, a small prepared-statement handle
+([`src/lib/durable-db.ts`](src/lib/durable-db.ts): `prepare / bind / first / all /
+run / batch`, with `batch` as one all-or-nothing transaction), so
+[`src/lib/library.ts`](src/lib/library.ts) reads like ordinary SQL code.
+`next dev` has no Durable Objects, so the library is simply empty there; use
+`npm run preview` for the real thing locally.
+
+**Backup and restore.** `GET /api/admin/library` returns every row as JSON and
+`POST` restores such a snapshot in one transaction. The route only exists while
+the `LIBRARY_ADMIN_SECRET` Worker secret is set, and needs it as a bearer token:
+
+```bash
+openssl rand -hex 32 | tee /tmp/s | wrangler secret put LIBRARY_ADMIN_SECRET
+curl -H "authorization: Bearer $(cat /tmp/s)" https://<your-site>/api/admin/library > backup.json
+wrangler secret delete LIBRARY_ADMIN_SECRET      # switches the route back off
+```
+
 ## Tests & CI/CD
 
 ```bash
@@ -199,10 +221,10 @@ npm run typecheck      # tsc for the app + the Worker (separate type worlds)
 
 Every push and PR runs **typecheck → tests → build** via GitHub Actions
 ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)). When `main` is green it
-applies D1 migrations, deploys the Worker, then deploys the Pages proxy. Add these
+deploys the Worker, then deploys the Pages proxy. Add these
 repo settings for the deploy job:
 
-- **Secrets** - `CLOUDFLARE_API_TOKEN` (Workers, D1, and Pages edit), `CLOUDFLARE_ACCOUNT_ID`
+- **Secrets** - `CLOUDFLARE_API_TOKEN` (Workers and Pages edit), `CLOUDFLARE_ACCOUNT_ID`
 - **Variables** - `NEXT_PUBLIC_SITE_URL` (and optionally the AdSense vars)
 
 ## Also an app 📱
@@ -248,10 +270,10 @@ proxy/                # Pages project for playhouseruled.pages.dev → service b
 src/
   agent/              # llms.txt, MCP server, Markdown negotiation, OpenAPI, JSON-LD
   server/room-do.ts   # RoomDO Durable Object - a room's state + presence + relay
+  server/library-*.ts # LibraryDO Durable Object - the community library's SQLite database
   app/                # routes: landing, /room/[code], manifest, icons, sitemap, robots
   components/         # Wordmark, FeltTable, PlayerSeat, HouseRulesPlaque, …
   lib/                # room lifecycle (REST → DO), anon identity, realtime (WS), code gen
-migrations/           # D1 (SQLite) schema for the library + accounts
 ```
 
 - **No accounts required.** A player is a random id + a name in `localStorage`.

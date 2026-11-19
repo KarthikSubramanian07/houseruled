@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { authorizeWrite, type D1DB, type D1PreparedStatement, type LibraryEnv } from "./library";
+import { authorizeWrite, type LibraryDB, type LibraryStatement, type LibraryEnv } from "./library";
 
 async function sha256hex(s: string): Promise<string> {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
   return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-function makeEnv(db: D1DB): LibraryEnv {
+function makeEnv(db: LibraryDB): LibraryEnv {
   return { DB: db };
 }
 
@@ -17,29 +17,29 @@ function boundStmt(
   isInsert: boolean,
   id: string,
   secretHash?: string,
-): D1PreparedStatement {
-  const stmt: D1PreparedStatement = {
+): LibraryStatement {
+  const stmt: LibraryStatement = {
     bind: () => stmt,
     async first<T>(): Promise<T | null> {
-      if (fail) throw new Error("D1 unavailable");
+      if (fail) throw new Error("database unavailable");
       if (!isSelect) return null;
       const stored = secrets[id];
       return stored ? ({ secret_hash: stored } as T) : null;
     },
     async run() {
-      if (fail) throw new Error("D1 unavailable");
+      if (fail) throw new Error("database unavailable");
       if (isInsert && secretHash && !secrets[id]) secrets[id] = secretHash;
       return { success: true };
     },
     async all<T>(): Promise<{ results: T[] }> {
-      if (fail) throw new Error("D1 unavailable");
+      if (fail) throw new Error("database unavailable");
       return { results: [] };
     },
   };
   return stmt;
 }
 
-function mockDb(secrets: Record<string, string>, fail = false): D1DB {
+function mockDb(secrets: Record<string, string>, fail = false): LibraryDB {
   return {
     prepare(sql: string) {
       const isSelect = sql.toLowerCase().includes("select");
@@ -51,7 +51,7 @@ function mockDb(secrets: Record<string, string>, fail = false): D1DB {
           return boundStmt(secrets, fail, isSelect, isInsert, id, secretHash);
         },
         async run() {
-          if (fail) throw new Error("D1 unavailable");
+          if (fail) throw new Error("database unavailable");
           return { success: true };
         },
         async first<T>(): Promise<T | null> {
