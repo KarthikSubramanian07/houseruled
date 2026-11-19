@@ -1,19 +1,20 @@
-// Community library + public profiles + favorites (Phase 5), all in D1. Server
-// only. Identity is the player's id (anonymous localStorage id today, Google-auth
+// Community library + public profiles + favorites (Phase 5). Server only. The
+// data lives in the LibraryDO Durable Object's SQLite storage; `env.DB` is a
+// prepared-statement handle onto it (see src/lib/durable-db.ts). Identity is the player's id (anonymous localStorage id today, Google-auth
 // id later - same column). Profiles are public and queryable by id.
-// Minimal D1 shapes so this compiles without @cloudflare/workers-types.
+// Minimal shapes of that handle - just what the queries below use.
 
-export interface D1PreparedStatement {
-  bind(...values: unknown[]): D1PreparedStatement;
+export interface LibraryStatement {
+  bind(...values: unknown[]): LibraryStatement;
   run(): Promise<unknown>;
   first<T = unknown>(): Promise<T | null>;
   all<T = unknown>(): Promise<{ results: T[] }>;
 }
-export interface D1DB {
-  prepare(sql: string): D1PreparedStatement;
+export interface LibraryDB {
+  prepare(sql: string): LibraryStatement;
 }
 export interface LibraryEnv {
-  DB?: D1DB;
+  DB?: LibraryDB;
 }
 
 export interface CustomGame {
