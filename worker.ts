@@ -46,11 +46,11 @@ export default {
       return stub.fetch(request);
     }
 
-    // One-time library import into the LibraryDO (404 unless its secret is set).
+    // Library backup/restore (404 unless its secret is set).
     if (url.pathname === LIBRARY_ADMIN_PATH) return handleLibraryAdmin(request, env);
 
-    // The app reads the community library through `env.DB`; point it at the
-    // store that is currently serving (see src/server/library-binding.ts).
+    // The app reads the community library through `env.DB`, which is the
+    // LibraryDO Durable Object (see src/server/library-binding.ts).
     const appEnv = withLibrary(env);
 
     // Everything else → Next.js via OpenNext, behind the agent gateway (llms.txt,
