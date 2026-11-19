@@ -22,12 +22,20 @@
       "service": "houseruled"
     }
   ],
-  // One Durable Object per room: live presence + game-state relay over WebSockets.
+  // RoomDO: one Durable Object per room - live presence + game-state relay over
+  // WebSockets. LibraryDO: a single instance whose SQLite storage is the
+  // community library (saved games, profiles, favorites, write auth).
   "durable_objects": {
-    "bindings": [{ "name": "ROOM_DO", "class_name": "RoomDO" }]
+    "bindings": [
+      { "name": "ROOM_DO", "class_name": "RoomDO" },
+      { "name": "LIBRARY_DO", "class_name": "LibraryDO" }
+    ]
   },
   // SQLite-backed Durable Objects are available on the free Workers plan.
-  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["RoomDO"] }],
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["RoomDO"] },
+    { "tag": "v2", "new_sqlite_classes": ["LibraryDO"] }
+  ],
   // Cache for AI-parsed house rules: hash(normalized text) → structured rule,
   // so a common rule ("twos are wild") only ever hits Groq once, ever.
   "kv_namespaces": [{ "binding": "RULE_CACHE", "id": "c15bf39885d542e79f0e19a7bba4c25c" }],
