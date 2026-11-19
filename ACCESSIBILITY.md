@@ -11,7 +11,7 @@ Houseruled aims for **WCAG 2.2 Level AA** on every page and reachable state of t
 
 - Full multiplayer rooms and mid-game surfaces need the Cloudflare Worker (`npm run preview` / deploy). Plain `next dev` runs a local table-demo lobby; live WebSocket chat and authoritative game play are exercised there instead.
 - Red/black suit colour on card faces is paired with rank text and an accessible name (for example “Ace of Hearts”), so colour is never the only cue.
-- Community library, profiles, and invent flows that call D1 or Groq may show empty or error states without those backends; those states are still labelled and announced.
+- Community library, profiles, and invent flows that call the library database or Groq may show empty or error states without those backends; those states are still labelled and announced.
 
 ## Report a barrier
 
