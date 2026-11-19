@@ -41,7 +41,10 @@
   "overrides": {
     "postcss": "^8.5.10",
     "@node-minify/core": {
-      "glob": ">=10.5.0 <11"
+      "glob": "^14.0.6"
+    },
+    "@opennextjs/cloudflare": {
+      "glob": "^14.0.6"
     }
   }
 }
