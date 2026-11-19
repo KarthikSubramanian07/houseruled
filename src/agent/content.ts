@@ -114,7 +114,7 @@ export const ABOUT: SiteDoc = {
     { type: "h2", text: "Who builds it" },
     {
       type: "p",
-      text: `Houseruled is an independent project built and maintained by Karthik Subramanian in Berkeley, California. It runs on Cloudflare Workers, Durable Objects (one per live table), D1, and KV. Questions, bug reports, and partnership requests go to ${CONTACT_EMAIL ? `[${CONTACT_EMAIL}](mailto:${CONTACT_EMAIL}) or ` : ""}[GitHub issues](${ISSUES_URL}); see [Contact](/contact).`,
+      text: `Houseruled is an independent project built and maintained by Karthik Subramanian in Berkeley, California. It runs on Cloudflare Workers, Durable Objects (one per live table, one for the library), and KV. Questions, bug reports, and partnership requests go to ${CONTACT_EMAIL ? `[${CONTACT_EMAIL}](mailto:${CONTACT_EMAIL}) or ` : ""}[GitHub issues](${ISSUES_URL}); see [Contact](/contact).`,
     },
   ],
 };
@@ -180,7 +180,7 @@ export const PRIVACY: SiteDoc = {
       type: "ul",
       items: [
         "**Live tables:** each room keeps its code, seats, display names, and game state in a Cloudflare Durable Object while the game runs. Chat is relayed live to the table and is not stored.",
-        "**Public profiles and the library:** if you save a game, its title, description, rules, and your display name and player id are stored in Cloudflare D1 and shown publicly. Favorites are stored by player id.",
+        "**Public profiles and the library:** if you save a game, its title, description, rules, and your display name and player id are stored in a Cloudflare Durable Object and shown publicly. Favorites are stored by player id.",
         "**Player auth:** a one-way hash of your secret token, so nobody else can post as your player id.",
         "**Rate limiting:** short-lived counters keyed by IP address in Cloudflare KV, expiring within two days.",
       ],
@@ -401,7 +401,7 @@ Houseruled is free forever, needs no account, and is open source (MIT). Tables a
 
 ## Optional
 
-- [Source code](${REPO_URL}): Next.js on Cloudflare Workers, Durable Objects, D1
+- [Source code](${REPO_URL}): Next.js on Cloudflare Workers, Durable Objects
 - [Sitemap](/sitemap.xml)
 `;
   return absolutize(md, siteUrl);

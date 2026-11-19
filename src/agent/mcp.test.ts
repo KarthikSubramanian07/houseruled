@@ -10,7 +10,7 @@ import {
   TOOLS,
   type McpEnv,
 } from "./mcp";
-import type { D1DB, D1PreparedStatement } from "../lib/library";
+import type { LibraryDB, LibraryStatement } from "../lib/library";
 
 const SITE = "https://playhouseruled.pages.dev";
 const URL_ = `${SITE}/mcp`;
@@ -26,12 +26,12 @@ const ROW = {
   creator_name: "Ana",
 };
 
-/** Minimal D1 fake: every query returns ROW (or nothing for an unknown slug). */
-function fakeDb(): D1DB {
+/** Minimal database fake: every query returns ROW (or nothing for an unknown slug). */
+function fakeDb(): LibraryDB {
   return {
     prepare(sql: string) {
       let binds: unknown[] = [];
-      const stmt: D1PreparedStatement = {
+      const stmt: LibraryStatement = {
         bind: (...v: unknown[]) => ((binds = v), stmt),
         run: async () => ({}),
         first: async <T,>() => (binds[0] === "chaos" ? (ROW as T) : null),

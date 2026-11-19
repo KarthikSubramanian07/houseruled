@@ -141,7 +141,7 @@ async function callTool(name: string, args: Record<string, unknown>, env: McpEnv
   try {
     return await runTool(name, args, env, siteUrl);
   } catch {
-    // Only the library tools touch D1; an outage is a tool error the model can read.
+    // Only the library tools touch the database; an outage is a tool error the model can read.
     return toolError("The community library is temporarily unavailable. Built-in games (list_games, get_game_rules) still work.");
   }
 }
